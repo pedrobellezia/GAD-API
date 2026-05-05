@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("/", response_model=AgencyRead)
 async def route_post_agency(
-        agency_data: AgencyCreate, db: AsyncSession = Depends(get_db)
+    agency_data: AgencyCreate, db: AsyncSession = Depends(get_db)
 ):
     new_agency = await create_agency(db, agency_data)
     return new_agency
@@ -20,7 +20,7 @@ async def route_post_agency(
 
 @router.get("/", response_model=list[AgencyRead] | None)
 async def route_get_agencies(
-        agency_data: AgencyFilter = Depends(), db: AsyncSession = Depends(get_db)
+    agency_data: AgencyFilter = Depends(), db: AsyncSession = Depends(get_db)
 ):
     new_agency = await get_agencies(db, agency_data)
     return new_agency if new_agency else None

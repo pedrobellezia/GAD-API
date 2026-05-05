@@ -16,6 +16,7 @@ class AgencyRead(BaseModel):
     cnpj: str
     created_at: datetime
 
+
 class AgencyFilter(BaseModel):
     id: Optional[UUID] = None
     name: Optional[str] = None
