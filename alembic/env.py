@@ -71,7 +71,6 @@ async def run_async_migrations() -> None:
 
     """
 
-    print(getenv("DATABASE_URL"), "oi", flush=True)
     config.set_section_option("alembic", "sqlalchemy.url", getenv("DATABASE_URL"))
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
