@@ -7,9 +7,14 @@ from app.schemas import WriterCreate, WriterFilter
 
 
 async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
-    query = select(Writer).join(Writer.user).join(Writer.agency).options(
-        contains_eager(Writer.user),
-        contains_eager(Writer.agency),
+    query = (
+        select(Writer)
+        .join(Writer.user)
+        .join(Writer.agency)
+        .options(
+            contains_eager(Writer.user),
+            contains_eager(Writer.agency),
+        )
     )
 
     if filters.user_name:

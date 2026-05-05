@@ -7,9 +7,14 @@ from app.schemas import ClientCreate, ClientFilter
 
 
 async def get_clients(db: AsyncSession, filters: ClientFilter) -> list[Client]:
-    query = select(Client).join(Client.user).join(Client.agency).options(
-        contains_eager(Client.user),
-        contains_eager(Client.agency),
+    query = (
+        select(Client)
+        .join(Client.user)
+        .join(Client.agency)
+        .options(
+            contains_eager(Client.user),
+            contains_eager(Client.agency),
+        )
     )
 
     if filters.user_name:

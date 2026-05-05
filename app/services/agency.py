@@ -7,7 +7,9 @@ from app.schemas import AgencyCreate, AgencyFilter
 
 
 async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
-    query = select(Agency).options(joinedload(Agency.clients), joinedload(Agency.writers))
+    query = select(Agency).options(
+        joinedload(Agency.clients), joinedload(Agency.writers)
+    )
 
     if filters.cnpj:
         query = query.where(Agency.cnpj == filters.cnpj)

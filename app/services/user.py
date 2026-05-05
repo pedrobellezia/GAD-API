@@ -8,10 +8,7 @@ from app.schemas import UserCreate, UserFilter
 
 
 async def get_users(db: AsyncSession, filters: UserFilter) -> list[User]:
-    query = select(User).options(
-        joinedload(User.client),
-        joinedload(User.writer)
-    )
+    query = select(User).options(joinedload(User.client), joinedload(User.writer))
 
     if filters.name:
         query = query.where(User.username.ilike(f"%{filters.name}%"))
@@ -27,9 +24,7 @@ async def get_users(db: AsyncSession, filters: UserFilter) -> list[User]:
 
 
 async def create_user(db: AsyncSession, user_data: UserCreate):
-    new_user = User(
-        **user_data.model_dump(exclude={"pswd"})
-    )
+    new_user = User(**user_data.model_dump(exclude={"pswd"}))
     new_user.pswd = pswd_hasher.hash(user_data.pswd)
     db.add(new_user)
     await db.commit()
