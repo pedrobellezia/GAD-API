@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/mekanism"
 
-engine = create_async_engine(DATABASE_URL, echo=True, pool_pre_ping=True)
+engine = create_async_engine(DATABASE_URL, pool_pre_ping=True)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
