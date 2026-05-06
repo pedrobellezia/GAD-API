@@ -10,6 +10,7 @@ dependencies = [
     "fastapi>=0.136.1",
     "pwdlib[argon2]>=0.3.0",
     "pymysql>=1.1.3",
+    "pytest-asyncio>=1.3.0",
     "sqlalchemy>=2.0.49",
     "uvicorn>=0.46.0",
 ]
@@ -17,6 +18,9 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ruff>=0.15.12",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -27,5 +31,6 @@ exclude = [
     "alembic/env.py",
 ]
 
-[project.scripts]
-start = "app.app:run"
+
+[tool.pytest.ini_options]
+anyio_mode = "auto"
