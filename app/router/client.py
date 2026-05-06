@@ -10,7 +10,7 @@ from app.services import create_client, get_clients
 router = APIRouter()
 
 
-@router.post("/", response_model=ClientRead)
+@router.post("", response_model=ClientRead)
 async def route_post_client(
     client_data: ClientCreate, db: AsyncSession = Depends(get_db)
 ):
@@ -18,7 +18,7 @@ async def route_post_client(
     return new_client
 
 
-@router.get("/", response_model=list[ClientRead] | None)
+@router.get("", response_model=list[ClientRead] | None)
 async def route_get_clients(
     client_data: ClientFilter, db: AsyncSession = Depends(get_db)
 ):

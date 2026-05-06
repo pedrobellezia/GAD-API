@@ -10,7 +10,7 @@ from app.services import create_writer, get_writers
 router = APIRouter()
 
 
-@router.post("/", response_model=WriterRead)
+@router.post("", response_model=WriterRead)
 async def route_post_writer(
     writer_data: WriterCreate, db: AsyncSession = Depends(get_db)
 ):
@@ -18,7 +18,7 @@ async def route_post_writer(
     return new_writer
 
 
-@router.get("/", response_model=list[WriterRead] | None)
+@router.get("", response_model=list[WriterRead] | None)
 async def route_get_writers(
     writer_data: WriterFilter, db: AsyncSession = Depends(get_db)
 ):

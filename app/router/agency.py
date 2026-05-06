@@ -10,7 +10,7 @@ from app.services import create_agency, get_agencies
 router = APIRouter()
 
 
-@router.post("/", response_model=AgencyRead)
+@router.post("", response_model=AgencyRead)
 async def route_post_agency(
     agency_data: AgencyCreate, db: AsyncSession = Depends(get_db)
 ):
@@ -18,7 +18,7 @@ async def route_post_agency(
     return new_agency
 
 
-@router.get("/", response_model=list[AgencyRead] | None)
+@router.get("", response_model=list[AgencyRead] | None)
 async def route_get_agencies(
     agency_data: AgencyFilter = Depends(), db: AsyncSession = Depends(get_db)
 ):

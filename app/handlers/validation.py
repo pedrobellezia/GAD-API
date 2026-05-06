@@ -9,10 +9,7 @@ async def request_validation_handler(_: Request, exc: RequestValidationError):
     for err in exc.errors():
         field = err["loc"][-1]
 
-        formatted_errors.append({
-            "field": field,
-            "message": err["msg"]
-        })
+        formatted_errors.append({"field": field, "message": err["msg"]})
 
     return JSONResponse(
         status_code=422,
@@ -30,6 +27,6 @@ async def response_validation_handler(_: Request, exc: ResponseValidationError):
         status_code=500,
         content={
             "error": "ReponseValidationError",
-            "message": "Houve um erro de validação nos dados retornados pela API"
+            "message": "Houve um erro de validação nos dados retornados pela API",
         },
     )

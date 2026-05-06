@@ -3,9 +3,8 @@ from os import getenv
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 
-from app.handlers import request_validation_handler
-from app.handlers.validation import response_validation_handler
-from app.router import *
+from app.handlers import request_validation_handler, response_validation_handler
+from app.router import agency_router, client_router, user_router, writer_router
 
 app = FastAPI(title="Fenix API", redirect_slashes=False)
 
