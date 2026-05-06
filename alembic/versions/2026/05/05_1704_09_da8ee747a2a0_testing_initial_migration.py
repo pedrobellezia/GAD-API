@@ -8,9 +8,9 @@ Create Date: 2026-05-05 17:04:09.645040+00:00
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "da8ee747a2a0"
@@ -39,12 +39,12 @@ def upgrade() -> None:
     op.create_table(
         "users",
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("username", sa.String(length=255), nullable=False),
+        sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("email", sa.String(length=255), nullable=False),
         sa.Column("pswd", sa.String(length=255), nullable=False),
         sa.Column(
             "type",
-            sa.Enum("ADMIN", "CLIENT", "WRITER", name="usertype"),
+            postgresql.ENUM("admin", "client", "writer", name="usertype"),
             nullable=False,
         ),
         sa.Column("avatar", sa.String(length=255), nullable=True),
@@ -95,4 +95,5 @@ def downgrade() -> None:
     op.drop_table("clients")
     op.drop_table("users")
     op.drop_table("agencies")
+    op.execute("DROP TYPE IF EXISTS usertype CASCADE")
     # ### end Alembic commands ###
