@@ -26,5 +26,5 @@ async def route_get_users(
 
 @router.get("/{user_id}", response_model=UserRead | None)
 async def route_get_user_by_id(user_id: UUID, db: AsyncSession = Depends(get_db)):
-    new_user = await get_users(db, UserFilter(id=user_id).model_dump())
+    new_user = await get_users(db, UserFilter(id=user_id))
     return new_user[0] if new_user else None
