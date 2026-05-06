@@ -17,8 +17,8 @@ class UserCreate(BaseModel):
 
 class UserRead(BaseModel):
     id: UUID
-    name: EmailStr
-    email: str
+    name: str
+    email: EmailStr
     type: UserType
     avatar: Optional[str] = None
     created_at: datetime
