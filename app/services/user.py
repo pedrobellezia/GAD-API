@@ -11,7 +11,7 @@ async def get_users(db: AsyncSession, filters: UserFilter) -> list[User]:
     query = select(User).options(joinedload(User.client), joinedload(User.writer))
 
     if filters.name:
-        query = query.where(User.username.ilike(f"%{filters.name}%"))
+        query = query.where(User.name.ilike(f"%{filters.name}%"))
     if filters.email:
         query = query.where(User.email == filters.email)
     if filters.type:
