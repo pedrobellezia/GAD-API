@@ -12,9 +12,9 @@ from app.core import Base
 
 
 class UserType(str, enum.Enum):
-    ADMIN = "admin"
-    CLIENT = "client"
-    WRITER = "writer"
+    admin = "admin"
+    client = "client"
+    writer = "writer"
 
 
 class User(Base):
@@ -23,7 +23,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    username: Mapped[str] = mapped_column(String(255), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     pswd: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[UserType] = mapped_column(alchemyEnum(UserType), nullable=False)
