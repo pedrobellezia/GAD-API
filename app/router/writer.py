@@ -20,7 +20,7 @@ async def route_post_writer(
 
 @router.get("", response_model=list[WriterRead] | None)
 async def route_get_writers(
-    writer_data: WriterFilter, db: AsyncSession = Depends(get_db)
+    writer_data: WriterFilter = Depends(), db: AsyncSession = Depends(get_db)
 ):
     new_writer = await get_writers(db, writer_data)
     return new_writer if new_writer else None
@@ -28,5 +28,5 @@ async def route_get_writers(
 
 @router.get("/{writer_id}", response_model=WriterRead | None)
 async def route_get_writer_by_id(writer_id: UUID, db: AsyncSession = Depends(get_db)):
-    new_writer = await get_writers(db, WriterFilter(id=writer_id).model_dump())
+    new_writer = await get_writers(db, WriterFilter(id=writer_id))
     return new_writer[0] if new_writer else None

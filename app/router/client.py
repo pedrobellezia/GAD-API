@@ -20,7 +20,7 @@ async def route_post_client(
 
 @router.get("", response_model=list[ClientRead] | None)
 async def route_get_clients(
-    client_data: ClientFilter, db: AsyncSession = Depends(get_db)
+    client_data: ClientFilter = Depends(), db: AsyncSession = Depends(get_db)
 ):
     new_client = await get_clients(db, client_data)
     return new_client if new_client else None
@@ -28,5 +28,5 @@ async def route_get_clients(
 
 @router.get("/{client_id}", response_model=ClientRead | None)
 async def route_get_client_by_id(client_id: UUID, db: AsyncSession = Depends(get_db)):
-    new_client = await get_clients(db, ClientFilter(id=client_id).model_dump())
+    new_client = await get_clients(db, ClientFilter(id=client_id))
     return new_client[0] if new_client else None

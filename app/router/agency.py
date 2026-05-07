@@ -28,5 +28,5 @@ async def route_get_agencies(
 
 @router.get("/{agency_id}", response_model=AgencyRead | None)
 async def route_get_agency_by_id(agency_id: UUID, db: AsyncSession = Depends(get_db)):
-    new_agency = await get_agencies(db, AgencyFilter(id=agency_id).model_dump())
+    new_agency = await get_agencies(db, AgencyFilter(id=agency_id))
     return new_agency[0] if new_agency else None
