@@ -23,7 +23,7 @@ async def route_get_clients(
     client_data: ClientFilter = Depends(), db: AsyncSession = Depends(get_db)
 ):
     new_client = await get_clients(db, client_data)
-    return new_client if new_client else None
+    return new_client
 
 
 @router.get("/{client_id}", response_model=ClientRead | None)

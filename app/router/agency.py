@@ -23,7 +23,7 @@ async def route_get_agencies(
     agency_data: AgencyFilter = Depends(), db: AsyncSession = Depends(get_db)
 ):
     new_agency = await get_agencies(db, agency_data)
-    return new_agency if new_agency else None
+    return new_agency
 
 
 @router.get("/{agency_id}", response_model=AgencyRead | None)
