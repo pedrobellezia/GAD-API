@@ -10,6 +10,8 @@ from app.schemas import UserCreate, UserFilter
 async def get_users(db: AsyncSession, filters: UserFilter) -> list[User]:
     query = select(User).options(joinedload(User.client), joinedload(User.writer))
 
+    if filters.id:
+        query = query.where(User.id == filters.id)
     if filters.name:
         query = query.where(User.name.ilike(f"%{filters.name}%"))
     if filters.email:

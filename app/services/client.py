@@ -17,6 +17,9 @@ async def get_clients(db: AsyncSession, filters: ClientFilter) -> list[Client]:
         )
     )
 
+    if filters.id:
+        query = query.where(Client.id == filters.id)
+
     if filters.user_name:
         query = query.where(User.name.ilike(f"%{filters.user_name}%"))
 

@@ -11,6 +11,9 @@ async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
         joinedload(Agency.clients), joinedload(Agency.writers)
     )
 
+    if filters.id:
+        query = query.where(Agency.id == filters.id)
+
     if filters.cnpj:
         query = query.where(Agency.cnpj == filters.cnpj)
 

@@ -17,6 +17,9 @@ async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
         )
     )
 
+    if filters.id:
+        query = query.where(Writer.id == filters.id)
+
     if filters.user_name:
         query = query.where(User.name.ilike(f"%{filters.user_name}%"))
 
