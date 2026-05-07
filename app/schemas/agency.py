@@ -4,10 +4,12 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.utils import NonEmpyStr
+
 
 class AgencyCreate(BaseModel):
-    name: str
-    cnpj: str
+    name: NonEmpyStr
+    cnpj: NonEmpyStr
 
 
 class AgencyRead(BaseModel):
