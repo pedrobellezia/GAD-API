@@ -1,9 +1,10 @@
 from os import getenv
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from sqlalchemy.exc import IntegrityError
 
+from app.core import get_api_key
 from app.handlers import (
     request_validation_handler,
     response_validation_handler,
@@ -11,7 +12,7 @@ from app.handlers import (
 )
 from app.router import agency_router, client_router, user_router, writer_router
 
-app = FastAPI(title="Fenix API", redirect_slashes=False)
+app = FastAPI(title="Fenix API", redirect_slashes=False, dependencies=[Depends(get_api_key)])
 
 app.include_router(agency_router, prefix="/agency", tags=["agency"])
 app.include_router(client_router, prefix="/client", tags=["client"])
