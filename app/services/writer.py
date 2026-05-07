@@ -2,7 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
-from app.models import Writer, Agency, User
+from app.core import pswd_hasher
+from app.models import Writer, Agency, User, UserType
 from app.schemas import WriterCreate, WriterFilter
 
 
@@ -36,8 +37,15 @@ async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
 
 
 async def create_writer(db: AsyncSession, writer_data: WriterCreate):
-    new_writer = Writer(**writer_data.model_dump())
-    db.add(new_writer)
-    await db.commit()
+    async with db.begin_nested():
+        new_user = User(**writer_data.user.model_dump(exclude={"pswd"}))
+        new_user.pswd = pswd_hasher.hash(writer_data.user.pswd)
+        new_user.type = UserType.writer
+        db.add(new_user)
+        await db.flush()
+
+        new_writer = Writer(id=new_user.id, agencyId=writer_data.agencyId)
+        db.add(new_writer)
+
     await db.refresh(new_writer)
     return new_writer

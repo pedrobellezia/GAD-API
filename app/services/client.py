@@ -2,7 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
-from app.models import Client, Agency, User
+from app.core import pswd_hasher
+from app.models import Client, Agency, User, UserType
 from app.schemas import ClientCreate, ClientFilter
 
 
@@ -36,8 +37,15 @@ async def get_clients(db: AsyncSession, filters: ClientFilter) -> list[Client]:
 
 
 async def create_client(db: AsyncSession, client_data: ClientCreate) -> Client:
-    new_client = Client(**client_data.model_dump())
-    db.add(new_client)
-    await db.commit()
+    async with db.begin_nested():
+        new_user = User(**client_data.user.model_dump(exclude={"pswd"}))
+        new_user.pswd = pswd_hasher.hash(client_data.user.pswd)
+        new_user.type = UserType.client
+        db.add(new_user)
+        await db.flush()
+
+        new_client = Client(id=new_user.id, agencyId=client_data.agencyId)
+        db.add(new_client)
+
     await db.refresh(new_client)
     return new_client
