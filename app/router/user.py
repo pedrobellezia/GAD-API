@@ -18,7 +18,7 @@ async def route_post_user(user_data: UserCreate, db: AsyncSession = Depends(get_
 
 @router.get("", response_model=list[UserRead] | None)
 async def route_get_users(
-        user_data: UserFilter = Depends(), db: AsyncSession = Depends(get_db)
+    user_data: UserFilter = Depends(), db: AsyncSession = Depends(get_db)
 ):
     new_user = await get_users(db, user_data)
     return new_user

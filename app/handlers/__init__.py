@@ -1,3 +1,11 @@
-from .validation import request_validation_handler, response_validation_handler
+from .validation import (
+    request_validation_handler,
+    response_validation_handler,
+    integrity_error_handler,
+)
 
-__all__ = ["request_validation_handler", "response_validation_handler"]
+__all__ = [
+    "request_validation_handler",
+    "response_validation_handler",
+    "integrity_error_handler",
+]
