@@ -66,7 +66,9 @@ async def client(db):
     app.dependency_overrides[original_get_db] = override
 
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        headers={"X-API-KEY": getenv("API_KEY")},
     ) as ac:
         yield ac
 

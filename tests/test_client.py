@@ -11,63 +11,61 @@ async def test_post_client(client: AsyncClient):
     assert agency_response.status_code == 200
     agency_id = agency_response.json()["id"]
 
-    # Create a user
-    user_data = {
-        "name": "Test User",
-        "email": "test@example.com",
-        "type": "client",
-        "pswd": "password123",
+    # Create a client with nested user
+    client_data = {
+        "agencyId": agency_id,
+        "user": {
+            "name": "Test User",
+            "email": "test@example.com",
+            "type": "client",
+            "pswd": "password123",
+        },
     }
-    user_response = await client.post("/user", json=user_data)
-    assert user_response.status_code == 200
-    user_id = user_response.json()["id"]
-
-    # Create a client
-    client_data = {"id": user_id, "agencyId": agency_id}
     response = await client.post("/client", json=client_data)
 
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == user_id
+    assert "id" in data
     assert data["agencyId"] == agency_id
 
 
 async def test_post_client_invalid_user_id(client: AsyncClient):
-    """Test creating a client with an invalid user ID."""
+    """Test creating a client with an invalid user type."""
     # Create an agency
     agency_data = {"name": "Test Agency", "cnpj": "12.345.678/0001-90"}
     agency_response = await client.post("/agency", json=agency_data)
     assert agency_response.status_code == 200
     agency_id = agency_response.json()["id"]
 
-    # Try to create a client with non-existent user
-    invalid_user_id = str(uuid.uuid4())
-    client_data = {"id": invalid_user_id, "agencyId": agency_id}
+    # Try to create a client with wrong user type
+    client_data = {
+        "agencyId": agency_id,
+        "user": {
+            "name": "Wrong Type",
+            "email": "wrongtype@example.com",
+            "type": "writer",
+            "pswd": "password123",
+        },
+    }
     response = await client.post("/client", json=client_data)
 
-    # Should fail because user doesn't exist
-    assert response.status_code >= 400
+    assert response.status_code == 422
 
 
 async def test_post_client_invalid_agency_id(client: AsyncClient):
     """Test creating a client with an invalid agency ID."""
-    # Create a user
-    user_data = {
-        "name": "Test User",
-        "email": "test@example.com",
-        "type": "client",
-        "pswd": "password123",
-    }
-    user_response = await client.post("/user", json=user_data)
-    assert user_response.status_code == 200
-    user_id = user_response.json()["id"]
-
-    # Try to create a client with non-existent agency
     invalid_agency_id = str(uuid.uuid4())
-    client_data = {"id": user_id, "agencyId": invalid_agency_id}
+    client_data = {
+        "agencyId": invalid_agency_id,
+        "user": {
+            "name": "Test User",
+            "email": "test@example.com",
+            "type": "client",
+            "pswd": "password123",
+        },
+    }
     response = await client.post("/client", json=client_data)
 
-    # Should fail because agency doesn't exist
     assert response.status_code >= 400
 
 
@@ -87,30 +85,28 @@ async def test_get_clients_with_data(client: AsyncClient):
     agency_response = await client.post("/agency", json=agency)
     agency_id = agency_response.json()["id"]
 
-    # Create first user and client
-    user1 = {
-        "name": "Client One",
-        "email": "client1@example.com",
-        "type": "client",
-        "pswd": "password123",
+    # Create first client
+    client_data1 = {
+        "agencyId": agency_id,
+        "user": {
+            "name": "Client One",
+            "email": "client1@example.com",
+            "type": "client",
+            "pswd": "password123",
+        },
     }
-    user1_response = await client.post("/user", json=user1)
-    user1_id = user1_response.json()["id"]
-
-    client_data1 = {"id": user1_id, "agencyId": agency_id}
     await client.post("/client", json=client_data1)
 
-    # Create second user and client
-    user2 = {
-        "name": "Client Two",
-        "email": "client2@example.com",
-        "type": "client",
-        "pswd": "password123",
+    # Create second client
+    client_data2 = {
+        "agencyId": agency_id,
+        "user": {
+            "name": "Client Two",
+            "email": "client2@example.com",
+            "type": "client",
+            "pswd": "password123",
+        },
     }
-    user2_response = await client.post("/user", json=user2)
-    user2_id = user2_response.json()["id"]
-
-    client_data2 = {"id": user2_id, "agencyId": agency_id}
     await client.post("/client", json=client_data2)
 
     # Get all clients
@@ -133,28 +129,31 @@ async def test_get_clients_filter_by_agency_name(client: AsyncClient):
     agency2_response = await client.post("/agency", json=agency2)
     agency2_id = agency2_response.json()["id"]
 
-    # Create users
-    user1 = {
-        "name": "User One",
-        "email": "user1@example.com",
-        "type": "client",
-        "pswd": "password123",
-    }
-    user1_response = await client.post("/user", json=user1)
-    user1_id = user1_response.json()["id"]
-
-    user2 = {
-        "name": "User Two",
-        "email": "user2@example.com",
-        "type": "client",
-        "pswd": "password123",
-    }
-    user2_response = await client.post("/user", json=user2)
-    user2_id = user2_response.json()["id"]
-
     # Create clients
-    await client.post("/client", json={"id": user1_id, "agencyId": agency1_id})
-    await client.post("/client", json={"id": user2_id, "agencyId": agency2_id})
+    await client.post(
+        "/client",
+        json={
+            "agencyId": agency1_id,
+            "user": {
+                "name": "User One",
+                "email": "user1@example.com",
+                "type": "client",
+                "pswd": "password123",
+            },
+        },
+    )
+    await client.post(
+        "/client",
+        json={
+            "agencyId": agency2_id,
+            "user": {
+                "name": "User Two",
+                "email": "user2@example.com",
+                "type": "client",
+                "pswd": "password123",
+            },
+        },
+    )
 
     # Filter by agency name
     response = await client.get("/client", params={"agency_name": "Tech"})
@@ -162,7 +161,6 @@ async def test_get_clients_filter_by_agency_name(client: AsyncClient):
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    # Should have at least one client from Tech Agency
     if data:
         assert len(data) >= 1
 
@@ -176,15 +174,18 @@ async def test_get_clients_pagination(client: AsyncClient):
 
     # Create multiple clients
     for i in range(1, 6):
-        user = {
-            "name": f"Client {i}",
-            "email": f"client{i}@example.com",
-            "type": "client",
-            "pswd": "password123",
-        }
-        user_response = await client.post("/user", json=user)
-        user_id = user_response.json()["id"]
-        await client.post("/client", json={"id": user_id, "agencyId": agency_id})
+        await client.post(
+            "/client",
+            json={
+                "agencyId": agency_id,
+                "user": {
+                    "name": f"Client {i}",
+                    "email": f"client{i}@example.com",
+                    "type": "client",
+                    "pswd": "password123",
+                },
+            },
+        )
 
     # Get first page
     response = await client.get("/client", params={"skip": 0, "limit": 2})
@@ -206,27 +207,27 @@ async def test_get_client_by_id(client: AsyncClient):
     agency_response = await client.post("/agency", json=agency)
     agency_id = agency_response.json()["id"]
 
-    # Create user
-    user_data = {
-        "name": "Test User",
-        "email": "test@example.com",
-        "type": "client",
-        "pswd": "password123",
-    }
-    user_response = await client.post("/user", json=user_data)
-    user_id = user_response.json()["id"]
-
     # Create client
-    client_data = {"id": user_id, "agencyId": agency_id}
+    client_data = {
+        "agencyId": agency_id,
+        "user": {
+            "name": "Test User",
+            "email": "test@example.com",
+            "type": "client",
+            "pswd": "password123",
+        },
+    }
     create_response = await client.post("/client", json=client_data)
     assert create_response.status_code == 200
 
-    # Get client by ID
-    response = await client.get(f"/client/{user_id}")
+    client_id = create_response.json()["id"]
+
+    # Get the client by ID
+    response = await client.get(f"/client/{client_id}")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == user_id
+    assert data["id"] == client_id
     assert data["agencyId"] == agency_id
 
 
