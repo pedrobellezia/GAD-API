@@ -21,10 +21,8 @@ async def _create_agency(client):
     return cnpj
 
 
-
 async def test_route_post_agency(client):
     await _create_agency(client)
-
 
 
 async def test_route_get_agencies(client):
@@ -35,7 +33,6 @@ async def test_route_get_agencies(client):
     agencies = list_resp.json() or []
     assert len(agencies) == 1
     assert agencies[0]["cnpj"] == cnpj
-
 
 
 async def test_route_get_agency_by_id(client):

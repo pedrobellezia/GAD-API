@@ -44,10 +44,8 @@ async def _create_client(client):
     return agency
 
 
-
 async def test_route_post_client(client):
     await _create_client(client)
-
 
 
 async def test_route_get_clients(client):
@@ -57,7 +55,6 @@ async def test_route_get_clients(client):
     assert list_resp.status_code == 200
     clients = list_resp.json() or []
     assert len(clients) == 1
-
 
 
 async def test_route_get_client_by_id(client):

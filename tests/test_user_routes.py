@@ -18,10 +18,8 @@ async def _create_user(client):
     return email
 
 
-
 async def test_route_post_user(client):
     await _create_user(client)
-
 
 
 async def test_route_get_users(client):
@@ -32,7 +30,6 @@ async def test_route_get_users(client):
     users = list_resp.json() or []
     assert len(users) == 1
     assert users[0]["email"] == email
-
 
 
 async def test_route_get_user_by_id(client):

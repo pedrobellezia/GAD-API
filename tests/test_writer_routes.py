@@ -44,10 +44,8 @@ async def _create_writer(client):
     return agency
 
 
-
 async def test_route_post_writer(client):
     await _create_writer(client)
-
 
 
 async def test_route_get_writers(client):
@@ -57,7 +55,6 @@ async def test_route_get_writers(client):
     assert list_resp.status_code == 200
     writers = list_resp.json() or []
     assert len(writers) == 1
-
 
 
 async def test_route_get_writer_by_id(client):
