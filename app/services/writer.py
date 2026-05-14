@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, aliased
 
 from app.core import pswd_hasher
 from app.models import Writer, Agency, User, UserType
@@ -8,13 +8,19 @@ from app.schemas import WriterCreate, WriterFilter
 
 
 async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
+    agency_user = aliased(User)
+
     query = (
         select(Writer)
         .join(Writer.user)
         .join(Writer.agency)
+        .join(agency_user, Agency.user)  # type: ignore
         .options(
             contains_eager(Writer.user),
-            contains_eager(Writer.agency),
+            contains_eager(Writer.agency).contains_eager(
+                Agency.user,
+                alias=agency_user,  # type: ignore
+            ),
         )
     )
 
@@ -27,8 +33,11 @@ async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
     if filters.agency_cnpj:
         query = query.where(Agency.cnpj == filters.agency_cnpj)
 
+    if filters.user_email:
+        query = query.where(User.email == filters.user_email)
+
     if filters.agency_name:
-        query = query.where(Agency.name.ilike(f"%{filters.agency_name}%"))
+        query = query.where(Agency.user.name.ilike(f"%{filters.agency_name}%"))
 
     query = query.offset(filters.skip).limit(filters.limit)
 
@@ -44,8 +53,9 @@ async def create_writer(db: AsyncSession, writer_data: WriterCreate):
         db.add(new_user)
         await db.flush()
 
-        new_writer = Writer(id=new_user.id, agencyId=writer_data.agencyId)
+        new_writer = Writer(id=new_user.id, agency_id=writer_data.agency_id)
         db.add(new_writer)
 
-    await db.refresh(new_writer)
+    await db.commit()
+    await db.refresh(new_writer, ["user"])
     return new_writer

@@ -1,6 +1,5 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from app.core import pswd_hasher
 from app.models import User
@@ -8,7 +7,7 @@ from app.schemas import UserCreate, UserFilter
 
 
 async def get_users(db: AsyncSession, filters: UserFilter) -> list[User]:
-    query = select(User).options(joinedload(User.client), joinedload(User.writer))
+    query = select(User)
 
     if filters.id:
         query = query.where(User.id == filters.id)

@@ -1,6 +1,7 @@
 from os import getenv
 
 import pytest
+import pytest_asyncio
 from alembic import command
 from alembic.config import Config
 from dotenv import load_dotenv
@@ -18,7 +19,7 @@ if not TEST_DATABASE_URL:
     raise ValueError("TEST_DATABASE_URL não encontrado nas variáveis de ambiente")
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def engine():
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
     try:
@@ -43,7 +44,7 @@ def apply_migrations():
     command.downgrade(alembic_cfg, "base")
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db(engine):
     async with engine.connect() as conn:
         trans = await conn.begin()
@@ -57,7 +58,7 @@ async def db(engine):
             await trans.rollback()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(db):
     async def override():
         yield db

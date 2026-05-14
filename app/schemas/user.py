@@ -2,17 +2,17 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
-from app.utils import NonEmpyStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from app.utils import NonEmptyStr
 from app.models import UserType
 
 
 class UserCreate(BaseModel):
-    name: NonEmpyStr
+    name: NonEmptyStr
     email: EmailStr
     type: UserType
-    avatar: Optional[NonEmpyStr] = None
-    pswd: NonEmpyStr
+    avatar: Optional[NonEmptyStr] = None
+    pswd: NonEmptyStr
 
 
 class UserRead(BaseModel):
@@ -31,5 +31,5 @@ class UserFilter(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     type: Optional[UserType] = None
-    skip: Optional[int] = 0
-    limit: Optional[int] = 100
+    skip: int = Field(0, ge=0)
+    limit: int = Field(100, ge=1, le=1000)

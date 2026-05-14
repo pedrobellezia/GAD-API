@@ -1,15 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import contains_eager
 
-from app.models import Agency
+from app.core import pswd_hasher
+from app.models import Agency, User, UserType
 from app.schemas import AgencyCreate, AgencyFilter
 
 
 async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
-    query = select(Agency).options(
-        joinedload(Agency.clients), joinedload(Agency.writers)
-    )
+    query = select(Agency).join(Agency.user).options(contains_eager(Agency.user))
 
     if filters.id:
         query = query.where(Agency.id == filters.id)
@@ -17,8 +16,11 @@ async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
     if filters.cnpj:
         query = query.where(Agency.cnpj == filters.cnpj)
 
-    if filters.name:
-        query = query.where(Agency.name.ilike(f"%{filters.name}%"))
+    if filters.user_email:
+        query = query.where(User.email == filters.user_email)
+
+    if filters.user_name:
+        query = query.where(User.name.ilike(f"%{filters.user_name}%"))
 
     query = query.offset(filters.skip).limit(filters.limit)
 
@@ -27,8 +29,16 @@ async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
 
 
 async def create_agency(db: AsyncSession, agency_data: AgencyCreate) -> Agency:
-    new_agency = Agency(**agency_data.model_dump())
-    db.add(new_agency)
+    async with db.begin_nested():
+        new_user = User(**agency_data.user.model_dump(exclude={"pswd"}))
+        new_user.pswd = pswd_hasher.hash(agency_data.user.pswd)
+        new_user.type = UserType.agency
+        db.add(new_user)
+        await db.flush()
+
+        new_agency = Agency(id=new_user.id, cnpj=agency_data.cnpj)
+        db.add(new_agency)
+
     await db.commit()
-    await db.refresh(new_agency)
+    await db.refresh(new_agency, ["user"])
     return new_agency

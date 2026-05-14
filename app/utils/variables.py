@@ -2,6 +2,6 @@ from typing import Annotated
 
 from pydantic import AfterValidator
 
-from app.utils import non_empty
+from app.utils.funcs import non_empty
 
-NonEmpyStr = Annotated[str, AfterValidator(non_empty)]
+NonEmptyStr = Annotated[str, AfterValidator(non_empty)]

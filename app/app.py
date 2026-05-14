@@ -12,7 +12,7 @@ from app.handlers import (
 )
 from app.router import agency_router, client_router, user_router, writer_router
 
-app = FastAPI(title="Fenix API", redirect_slashes=False, dependencies=[Depends(get_api_key)])
+app = FastAPI(title="Fenix API", dependencies=[Depends(get_api_key)])
 
 app.include_router(agency_router, prefix="/agency", tags=["agency"])
 app.include_router(client_router, prefix="/client", tags=["client"])

@@ -10,13 +10,12 @@ from app.services import create_user, get_users
 router = APIRouter()
 
 
-@router.post("", response_model=UserRead)
+@router.post(path="", status_code=202)
 async def route_post_user(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
-    new_user = await create_user(db, user_data)
-    return new_user
+    await create_user(db, user_data)
 
 
-@router.get("", response_model=list[UserRead] | None)
+@router.get(path="", response_model=list[UserRead] | None, status_code=200)
 async def route_get_users(
     user_data: UserFilter = Depends(), db: AsyncSession = Depends(get_db)
 ):
@@ -24,7 +23,7 @@ async def route_get_users(
     return new_user
 
 
-@router.get("/{user_id}", response_model=UserRead | None)
+@router.get("/{user_id}", response_model=UserRead | None, status_code=200)
 async def route_get_user_by_id(user_id: UUID, db: AsyncSession = Depends(get_db)):
     new_user = await get_users(db, UserFilter(id=user_id))
     return new_user[0] if new_user else None
