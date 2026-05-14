@@ -13,7 +13,7 @@ class Client(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("users.id"), primary_key=True
     )
-    agencyId: Mapped[uuid.UUID] = mapped_column(
+    agency_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("agencies.id"), nullable=False
     )
 
