@@ -7,11 +7,11 @@ from pydantic_core import PydanticCustomError
 
 from app.models import UserType
 from app.schemas.user import UserCreate, UserRead
-from app.utils import NonEmptyStr
+from app.utils import CNPJ
 
 
 class AgencyCreate(BaseModel):
-    cnpj: NonEmptyStr
+    cnpj: CNPJ
     user: UserCreate
 
     @field_validator("user")
@@ -26,7 +26,7 @@ class AgencyCreate(BaseModel):
 
 class AgencyRead(BaseModel):
     id: UUID
-    cnpj: str
+    cnpj: CNPJ
     user: UserRead
 
 
@@ -34,6 +34,6 @@ class AgencyFilter(BaseModel):
     id: Optional[UUID] = None
     user_email: Optional[EmailStr] = None
     user_name: Optional[str] = None
-    cnpj: Optional[str] = None
+    cnpj: Optional[CNPJ] = None
     skip: int = Field(0, ge=0)
     limit: int = Field(100, ge=1, le=1000)

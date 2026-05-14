@@ -1,4 +1,4 @@
-from .funcs import non_empty
-from .variables import NonEmptyStr
+from .funcs import non_empty, validate_cnpj
+from .variables import NonEmptyStr, CNPJ
 
-__all__ = ["non_empty", "NonEmptyStr"]
+__all__ = ["non_empty", "NonEmptyStr", "validate_cnpj", "CNPJ"]
