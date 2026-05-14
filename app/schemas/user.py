@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -31,5 +31,5 @@ class UserFilter(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     type: Optional[UserType] = None
-    skip: int = Field(0, ge=0)
-    limit: int = Field(100, ge=1, le=1000)
+    skip: Annotated[int, Field(ge=0)] = 0
+    limit: Annotated[int, Field(ge=1, le=1000)] = 100

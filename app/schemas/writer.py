@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator, EmailStr, Field
@@ -37,5 +37,5 @@ class WriterFilter(BaseModel):
     user_email: Optional[EmailStr] = None
     agency_cnpj: Optional[str] = None
     agency_name: Optional[str] = None
-    skip: int = Field(0, ge=0)
-    limit: int = Field(100, ge=1, le=1000)
+    skip: Annotated[int, Field(ge=0)] = 0
+    limit: Annotated[int, Field(ge=1, le=1000)] = 100

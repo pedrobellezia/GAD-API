@@ -1,5 +1,5 @@
 # importar diretamente pra evitar circular import
-from typing import Optional
+from typing import Optional, Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator, EmailStr, Field
@@ -34,6 +34,6 @@ class AgencyFilter(BaseModel):
     id: Optional[UUID] = None
     user_email: Optional[EmailStr] = None
     user_name: Optional[str] = None
-    cnpj: Optional[CNPJ] = None
-    skip: int = Field(0, ge=0)
-    limit: int = Field(100, ge=1, le=1000)
+    cnpj: Optional[str] = None
+    skip: Annotated[int, Field(ge=0)] = 0
+    limit: Annotated[int, Field(ge=1)] = 100
