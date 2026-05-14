@@ -6,9 +6,9 @@ from app.models import User
 from app.schemas import (
     RegisterPayload,
     LoginPayload,
-    AgencyRegister,
-    WriterRegister,
-    ClientRegister,
+    AgencyCreate,
+    WriterCreate,
+    ClientCreate,
 )
 from app.services import create_agency, create_writer, create_client
 
@@ -21,16 +21,17 @@ async def login(db: AsyncSession, payload: LoginPayload) -> bool:
         return False
 
     bar = pswd_hasher.verify(payload.pswd, result.pswd)
+
     return bar
 
 
 async def register(db: AsyncSession, payload: RegisterPayload) -> None:
     match payload:
-        case AgencyRegister():
+        case AgencyCreate():
             await create_agency(db=db, agency_data=payload)
 
-        case WriterRegister():
+        case WriterCreate():
             await create_writer(db=db, writer_data=payload)
 
-        case ClientRegister():
+        case ClientCreate():
             await create_client(db=db, client_data=payload)
