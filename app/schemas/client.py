@@ -12,7 +12,7 @@ from app.schemas.user import UserCreate, UserRead
 
 
 class ClientCreate(BaseModel):
-    agency_id: UUID
+    agency_id: Optional[UUID]
     user: UserCreate
 
     @field_validator("user")
