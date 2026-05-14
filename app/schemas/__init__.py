@@ -1,8 +1,5 @@
 from .agency import AgencyCreate, AgencyRead, AgencyFilter
-from .auth import (
-    RegisterPayload,
-    LoginPayload
-)
+from .auth import RegisterPayload, LoginPayload
 from .client import ClientFilter, ClientCreate, ClientRead
 from .user import UserCreate, UserRead, UserFilter
 from .writer import WriterFilter, WriterCreate, WriterRead

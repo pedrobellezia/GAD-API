@@ -16,6 +16,6 @@ async def route_login(login_payload: LoginPayload, db: AsyncSession = Depends(ge
 
 @router.post(path="/register")
 async def route_register(
-        register_payload: RegisterPayload, db: AsyncSession = Depends(get_db)
+    register_payload: RegisterPayload, db: AsyncSession = Depends(get_db)
 ):
     await register(db, register_payload)

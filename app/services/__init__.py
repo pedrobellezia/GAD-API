@@ -15,5 +15,4 @@ __all__ = [
     "get_writers",
     "login",
     "register",
-
 ]

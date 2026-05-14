@@ -33,6 +33,6 @@ def validate_cnpj(cnpj: str) -> str:
     second_digit = calc_digit(cnpj[:12] + first_digit, second_weights)
 
     if cnpj[-2:] != first_digit + second_digit:
-        raise PydanticCustomError("invalid_cnpj", f"CNPJ inválido")
+        raise PydanticCustomError("invalid_cnpj", "CNPJ inválido")
 
     return cnpj

@@ -1,6 +1,5 @@
 import uuid
 
-import pytest
 
 
 async def _create_user(client):

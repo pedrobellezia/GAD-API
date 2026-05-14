@@ -10,7 +10,13 @@ from app.handlers import (
     response_validation_handler,
     integrity_error_handler,
 )
-from app.router import agency_router, client_router, user_router, writer_router, auth_router
+from app.router import (
+    agency_router,
+    client_router,
+    user_router,
+    writer_router,
+    auth_router,
+)
 
 app = FastAPI(title="Fenix API", dependencies=[Depends(get_api_key)])
 
