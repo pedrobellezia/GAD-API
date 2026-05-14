@@ -1,4 +1,4 @@
-from os import getenv
+from app.core import get_env
 
 from fastapi import FastAPI, Depends
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "app.app:app",
-        host=getenv("HOST"),
-        port=int(getenv("PORT")),
+        host=get_env("HOST"),
+        port=int(get_env("PORT")),
         reload=True,
     )

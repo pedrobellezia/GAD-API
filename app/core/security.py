@@ -1,17 +1,26 @@
-from os import getenv
+from datetime import datetime, timezone, timedelta
+from uuid import UUID
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from pwdlib import PasswordHash
 
-API_KEY_ENV_NAME = "API_KEY"
-api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=False)
+from app.core import (
+    API_KEY_ENV_NAME,
+    API_KEY_HEADER_NAME,
+    JWT_ALGORITHM,
+    JWT_EXPIRES_MINUTES,
+    JWT_SECRET_KEY,
+    get_env,
+)
+
+api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
+pswd_hasher = PasswordHash.recommended()
 
 
 def get_api_key(api_key: str | None = Depends(api_key_header)) -> str:
-    expected_key = getenv(API_KEY_ENV_NAME)
-    if not expected_key:
-        raise RuntimeError(f"{API_KEY_ENV_NAME} environment variable is not set")
+    expected_key = get_env(API_KEY_ENV_NAME, required=True)
 
     if not api_key or api_key != expected_key:
         raise HTTPException(
@@ -22,4 +31,24 @@ def get_api_key(api_key: str | None = Depends(api_key_header)) -> str:
     return api_key
 
 
-pswd_hasher = PasswordHash.recommended()
+def create_token(user_id: UUID, **extra_info):
+    payload = {
+        "sub": str(user_id),
+        **extra_info,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRES_MINUTES),
+    }
+
+    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    return token
+
+
+def decode_token(token: str):
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(401, "Token expirado")
+
+    except jwt.InvalidTokenError:
+        raise HTTPException(401, "Token inválido")
