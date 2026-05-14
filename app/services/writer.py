@@ -45,7 +45,7 @@ async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
     return list(result.scalars().unique().all())
 
 
-async def create_writer(db: AsyncSession, writer_data: WriterCreate):
+async def create_writer(db: AsyncSession, writer_data: WriterCreate) -> None:
     async with db.begin_nested():
         new_user = User(**writer_data.user.model_dump(exclude={"pswd"}))
         new_user.pswd = pswd_hasher.hash(writer_data.user.pswd)
@@ -57,5 +57,3 @@ async def create_writer(db: AsyncSession, writer_data: WriterCreate):
         db.add(new_writer)
 
     await db.commit()
-    await db.refresh(new_writer, ["user"])
-    return new_writer

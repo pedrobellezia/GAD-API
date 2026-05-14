@@ -28,7 +28,7 @@ async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
     return list(result.scalars().unique().all())
 
 
-async def create_agency(db: AsyncSession, agency_data: AgencyCreate) -> Agency:
+async def create_agency(db: AsyncSession, agency_data: AgencyCreate) -> None:
     async with db.begin_nested():
         new_user = User(**agency_data.user.model_dump(exclude={"pswd"}))
         new_user.pswd = pswd_hasher.hash(agency_data.user.pswd)
@@ -40,5 +40,3 @@ async def create_agency(db: AsyncSession, agency_data: AgencyCreate) -> Agency:
         db.add(new_agency)
 
     await db.commit()
-    await db.refresh(new_agency, ["user"])
-    return new_agency

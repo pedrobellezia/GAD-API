@@ -45,7 +45,7 @@ async def get_clients(db: AsyncSession, filters: ClientFilter) -> list[Client]:
     return list(result.scalars().unique().all())
 
 
-async def create_client(db: AsyncSession, client_data: ClientCreate) -> Client:
+async def create_client(db: AsyncSession, client_data: ClientCreate) -> None:
     async with db.begin_nested():
         new_user = User(**client_data.user.model_dump(exclude={"pswd"}))
         new_user.pswd = pswd_hasher.hash(client_data.user.pswd)
@@ -57,5 +57,3 @@ async def create_client(db: AsyncSession, client_data: ClientCreate) -> Client:
         db.add(new_client)
 
     await db.commit()
-    await db.refresh(new_client, ["user"])
-    return new_client

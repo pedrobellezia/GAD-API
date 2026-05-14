@@ -2,6 +2,7 @@ from os import getenv
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
+from pwdlib import PasswordHash
 
 API_KEY_ENV_NAME = "API_KEY"
 api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=False)
@@ -19,3 +20,6 @@ def get_api_key(api_key: str | None = Depends(api_key_header)) -> str:
         )
 
     return api_key
+
+
+pswd_hasher = PasswordHash.recommended()
