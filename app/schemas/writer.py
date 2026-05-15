@@ -29,7 +29,7 @@ class WriterCreate(BaseModel):
 class WriterRead(BaseModel):
     id: UUID
     user: UserRead
-    agency: AgencyRead
+    agency: AgencyRead | None
 
 
 class WriterFilter(BaseModel):

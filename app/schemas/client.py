@@ -29,7 +29,7 @@ class ClientCreate(BaseModel):
 class ClientRead(BaseModel):
     id: UUID
     user: UserRead
-    agency: AgencyRead
+    agency: AgencyRead | None
 
 
 class ClientFilter(BaseModel):
