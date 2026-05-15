@@ -1,18 +1,19 @@
-from typing import Optional, Annotated
+from typing import Optional, Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator, EmailStr, Field
 from pydantic_core import PydanticCustomError
 
 from app.models import UserType
-from app.schemas import UserRead, AgencyRead
+from app.schemas import AgencyRead
 
 # importar diretamente pra evitar circular import
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserRead
 
 
 class WriterCreate(BaseModel):
-    agency_id: Optional[UUID]
+    kind: Literal["writer"]
+    agency_id: Optional[UUID] = None
     user: UserCreate
 
     @field_validator("user")

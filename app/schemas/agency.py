@@ -1,5 +1,4 @@
-# importar diretamente pra evitar circular import
-from typing import Optional, Annotated
+from typing import Optional, Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator, EmailStr, Field
@@ -13,6 +12,7 @@ from app.utils import CNPJ
 class AgencyCreate(BaseModel):
     cnpj: CNPJ
     user: UserCreate
+    kind: Literal["agency"]
 
     @field_validator("user")
     @classmethod

@@ -1,4 +1,4 @@
-from typing import Optional, Annotated
+from typing import Optional, Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator, EmailStr, Field
@@ -12,7 +12,8 @@ from app.schemas.user import UserCreate, UserRead
 
 
 class ClientCreate(BaseModel):
-    agency_id: Optional[UUID]
+    agency_id: Optional[UUID] = None
+    kind: Literal["client"]
     user: UserCreate
 
     @field_validator("user")

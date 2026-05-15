@@ -2,7 +2,9 @@ from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.schemas import ClientCreate, WriterCreate, AgencyCreate
+from app.schemas.client import ClientCreate
+from app.schemas.agency import AgencyCreate
+from app.schemas.writer import WriterCreate
 from app.utils import NonEmptyStr
 
 
@@ -12,5 +14,5 @@ class LoginPayload(BaseModel):
 
 
 RegisterPayload = Annotated[
-    ClientCreate | WriterCreate | AgencyCreate, Field(discriminator="type")
+    ClientCreate | WriterCreate | AgencyCreate, Field(discriminator="kind")
 ]

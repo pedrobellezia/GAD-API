@@ -14,7 +14,7 @@ class Writer(Base):
         Uuid, ForeignKey("users.id"), primary_key=True
     )
     agency_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("agencies.id"), nullable=False
+        Uuid, ForeignKey("agencies.id"), nullable=True
     )
 
     user: Mapped["User"] = relationship(back_populates="writer")
