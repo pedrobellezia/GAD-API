@@ -3,7 +3,7 @@ from uuid import UUID
 
 import jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import APIKeyHeader
+from fastapi.security import APIKeyHeader, HTTPBearer
 from pwdlib import PasswordHash
 
 from app.core import (
@@ -17,6 +17,7 @@ from app.core import (
 
 api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
 pswd_hasher = PasswordHash.recommended()
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_api_key(api_key: str | None = Depends(api_key_header)) -> str:

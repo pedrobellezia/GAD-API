@@ -14,7 +14,7 @@ async def route_login(login_payload: LoginPayload, db: AsyncSession = Depends(ge
     return await login(db, login_payload)
 
 
-@router.post(path="/register")
+@router.post(path="/register", status_code=202)
 async def route_register(
     register_payload: RegisterPayload, db: AsyncSession = Depends(get_db)
 ):

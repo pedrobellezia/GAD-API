@@ -7,7 +7,13 @@ from .config import (
     get_env,
 )
 from .database import Base, get_db
-from .security import get_api_key, pswd_hasher
+from .security import (
+    get_api_key,
+    pswd_hasher,
+    bearer_scheme,
+    create_token,
+    decode_token,
+)
 
 __all__ = [
     "Base",
@@ -20,4 +26,7 @@ __all__ = [
     "JWT_EXPIRES_MINUTES",
     "JWT_SECRET_KEY",
     "get_env",
+    "bearer_scheme",
+    "create_token",
+    "decode_token",
 ]
