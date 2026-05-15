@@ -1,7 +1,6 @@
 import uuid
 
 
-
 async def _create_agency(client):
     cnpj = f"{uuid.uuid4().int % 10**14:014d}"
     payload = {

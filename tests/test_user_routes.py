@@ -1,7 +1,6 @@
 import uuid
 
 
-
 async def _create_user(client):
     email = f"user-{uuid.uuid4()}@example.com"
     payload = {

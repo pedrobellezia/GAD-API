@@ -18,7 +18,7 @@ async def get_current_user(
     if not credentials or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token ausente",
+            detail="Token JWT ausente",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -28,7 +28,7 @@ async def get_current_user(
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalido",
+            detail="Token JWT invalido",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -37,7 +37,7 @@ async def get_current_user(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalido",
+            detail="Token JWT invalido",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -47,6 +47,7 @@ async def get_current_user(
             selectinload(User.client),
             selectinload(User.writer),
             selectinload(User.agency),
+            selectinload(User.token_info),
         )
         .where(User.id == user_uuid)
     )

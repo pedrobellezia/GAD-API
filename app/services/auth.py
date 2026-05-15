@@ -12,7 +12,9 @@ from app.schemas import (
     WriterCreate,
     ClientCreate,
 )
-from app.services import create_agency, create_writer, create_client
+from app.services import create_agency
+from app.services.writer import create_writer
+from app.services.client import create_client
 
 
 async def login(db: AsyncSession, payload: LoginPayload) -> str:
@@ -39,7 +41,7 @@ async def login(db: AsyncSession, payload: LoginPayload) -> str:
         user_id=result.id,
         **{
             "type": result.type.value,
-            "agency_id": result.agency.id if result.agency else None,
+            "agency_id": str(result.agency.id) if result.agency else None,
         },
     )
 

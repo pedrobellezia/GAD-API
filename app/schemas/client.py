@@ -1,7 +1,7 @@
 from typing import Optional, Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator, EmailStr, Field
+from pydantic import BaseModel, field_validator, EmailStr, Field, ConfigDict
 from pydantic_core import PydanticCustomError
 
 from app.models import UserType
@@ -30,6 +30,8 @@ class ClientRead(BaseModel):
     id: UUID
     user: UserRead
     agency: AgencyRead | None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClientFilter(BaseModel):
