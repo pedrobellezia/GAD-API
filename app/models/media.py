@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from enum import Enum
 
-from sqlalchemy import BigInteger, DateTime, Enum as SQLEnum, String, Uuid, func
+from sqlalchemy import BigInteger, Enum as SQLEnum, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
@@ -56,18 +56,5 @@ class Media(Base):
 
     # Hash/checksum para validação de integridade e deduplicação.
     checksum: Mapped[str | None] = mapped_column(String(128), nullable=True)
-
-    created_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
-
-    updated_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-    )
 
     post_medias = relationship("PostMedia", back_populates="media")

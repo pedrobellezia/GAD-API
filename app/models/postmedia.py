@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import DateTime, ForeignKey, Uuid, func, Integer
+from sqlalchemy import ForeignKey, Uuid, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
@@ -22,19 +22,6 @@ class PostMedia(Base):
     )
 
     position = mapped_column(Integer, default=0, nullable=False)
-
-    created_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
-
-    updated_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-    )
 
     post = relationship("Post", back_populates="medias")
     media = relationship("Media", back_populates="post_medias")
