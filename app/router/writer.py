@@ -1,31 +1,75 @@
-from uuid import UUID
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.core import get_db
-from app.schemas import WriterCreate, WriterRead, WriterFilter
-from app.services import create_writer, get_writers
+from app.core import get_db, get_current_writer
+from app.models import Agency, Client, Writer, User
+from app.schemas import (
+    AgencyRead,
+    ClientRead,
+    WriterRead,
+)
 
 router = APIRouter()
 
 
-@router.post(path="", status_code=202)
-async def route_post_writer(
-    writer_data: WriterCreate, db: AsyncSession = Depends(get_db)
+@router.get(path="/me", response_model=WriterRead, status_code=200)
+async def route_writer_me(
+    user: User = Depends(get_current_writer),
+    db: AsyncSession = Depends(get_db),
 ):
-    await create_writer(db, writer_data)
+    writer = await db.scalar(
+        select(Writer)
+        .options(
+            selectinload(Writer.user),
+            selectinload(Writer.agency).selectinload(Agency.user),
+        )
+        .where(Writer.id == user.id)
+    )
+    return writer
 
 
-@router.get(path="", response_model=list[WriterRead] | None, status_code=200)
-async def route_get_writers(
-    writer_data: WriterFilter = Depends(), db: AsyncSession = Depends(get_db)
+@router.get(path="/me/agency", response_model=AgencyRead | None, status_code=200)
+async def route_writer_agency(
+    user: User = Depends(get_current_writer),
+    db: AsyncSession = Depends(get_db),
 ):
-    new_writer = await get_writers(db, writer_data)
-    return new_writer
+    agency_id = user.writer.agency_id if user.writer else None
+    if not agency_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Writer nao possui agencia",
+        )
+
+    agency = await db.scalar(
+        select(Agency).options(selectinload(Agency.user)).where(Agency.id == agency_id)
+    )
+    return agency
 
 
-@router.get("/{writer_id}", response_model=WriterRead | None, status_code=200)
-async def route_get_writer_by_id(writer_id: UUID, db: AsyncSession = Depends(get_db)):
-    new_writer = await get_writers(db, WriterFilter(id=writer_id))
-    return new_writer[0] if new_writer else None
+@router.get(
+    path="/me/agency/clients",
+    response_model=list[ClientRead],
+    status_code=200,
+)
+async def route_writer_agency_clients(
+    user: User = Depends(get_current_writer),
+    db: AsyncSession = Depends(get_db),
+):
+    agency_id = user.writer.agency_id if user.writer else None
+    if not agency_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Writer nao possui agencia",
+        )
+
+    result = await db.scalars(
+        select(Client)
+        .options(
+            selectinload(Client.user),
+            selectinload(Client.agency).selectinload(Agency.user),
+        )
+        .where(Client.agency_id == agency_id)
+    )
+    return list(result.unique().all())
