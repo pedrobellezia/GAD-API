@@ -1,9 +1,8 @@
 from .agency import create_agency, get_agencies
 from .auth import login, register
 from .client import create_client, get_clients
-from .invite_token import (
-    create_invite_tokens,
-)
+from .invite_token import create_invite_tokens
+
 from .user import create_user, get_users
 from .writer import create_writer, get_writers
 

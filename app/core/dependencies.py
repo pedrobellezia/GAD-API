@@ -47,7 +47,6 @@ async def get_current_user(
             selectinload(User.client),
             selectinload(User.writer),
             selectinload(User.agency),
-            selectinload(User.token_info),
         )
         .where(User.id == user_uuid)
     )

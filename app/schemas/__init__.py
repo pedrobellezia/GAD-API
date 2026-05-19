@@ -1,13 +1,13 @@
 from .agency import AgencyCreate, AgencyRead, AgencyFilter
 from .auth import RegisterPayload, LoginPayload
-from .client import ClientFilter, ClientCreate, ClientRead
+from .client import ClientFilter, ClientCreate, ClientRead, ClientReadNoAgency
 from .invite_token import (
     InviteTokenBatchCreate,
     InviteTokenRead,
     InviteTokenPayload,
 )
 from .user import UserCreate, UserRead, UserFilter
-from .writer import WriterFilter, WriterCreate, WriterRead
+from .writer import WriterFilter, WriterCreate, WriterRead, WriterReadNoAgency
 
 __all__ = [
     "AgencyCreate",
@@ -27,4 +27,6 @@ __all__ = [
     "InviteTokenBatchCreate",
     "InviteTokenRead",
     "InviteTokenPayload",
+    "ClientReadNoAgency",
+    "WriterReadNoAgency",
 ]

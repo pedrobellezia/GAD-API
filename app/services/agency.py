@@ -3,9 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
 from app.core import pswd_hasher
-from app.models import Agency, User, UserType, InviteTokenKind
-from app.services.invite_token import create_invite_tokens
+from app.models import Agency, User, UserType
 from app.schemas import AgencyCreate, AgencyFilter
+from app.services.invite_token import create_invite_tokens
 
 
 async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
@@ -41,11 +41,6 @@ async def create_agency(db: AsyncSession, agency_data: AgencyCreate) -> None:
         db.add(new_agency)
         await db.flush()
 
-        await create_invite_tokens(
-            db, agency_id=new_agency.id, kind=InviteTokenKind.client, quantity=5
-        )
-        await create_invite_tokens(
-            db, agency_id=new_agency.id, kind=InviteTokenKind.writer, quantity=5
-        )
+        await create_invite_tokens(db, agency_id=new_agency.id, quantity=10)
 
     await db.commit()

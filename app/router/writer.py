@@ -5,8 +5,13 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_writer
-from app.models import Agency, Client, InviteToken, InviteTokenKind, User, Writer
-from app.schemas import AgencyRead, ClientRead, InviteTokenPayload, WriterRead
+from app.models import Agency, Client, InviteToken, User, Writer
+from app.schemas import (
+    AgencyRead,
+    InviteTokenPayload,
+    WriterRead,
+    ClientReadNoAgency,
+)
 
 router = APIRouter()
 
@@ -47,7 +52,7 @@ async def route_writer_agency(
 
 @router.get(
     path="/me/agency/clients",
-    response_model=list[ClientRead],
+    response_model=list[ClientReadNoAgency],
     status_code=200,
 )
 async def route_writer_agency_clients(
@@ -63,16 +68,13 @@ async def route_writer_agency_clients(
 
     result = await db.scalars(
         select(Client)
-        .options(
-            selectinload(Client.user),
-            selectinload(Client.agency).selectinload(Agency.user),
-        )
+        .options(selectinload(Client.user))
         .where(Client.agency_id == agency_id)
     )
     return list(result.unique().all())
 
 
-@router.post(path="/me/agency/link", response_model=WriterRead, status_code=200)
+@router.post(path="/me/agency/link", status_code=200)
 async def route_writer_link_agency(
     payload: InviteTokenPayload,
     user: User = Depends(get_current_writer),
@@ -93,21 +95,10 @@ async def route_writer_link_agency(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Token de convite invalido",
         )
-    if token.kind != InviteTokenKind.writer:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token de convite nao permitido para writer",
-        )
-    if token.used_by:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Token de convite ja utilizado",
-        )
 
     user.writer.agency_id = token.agency_id
-    token.used_by = user
-
     await db.flush()
+    await db.delete(token)
     await db.commit()
 
 
@@ -122,14 +113,5 @@ async def route_client_unlink_agency(
             detail="Writer nao possui agencia",
         )
 
-    if user.token_info is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Writer nao possui token de convite vinculado",
-        )
-
-    user.token_info = None
     user.writer.agency_id = None
     await db.commit()
-
-    return {"detail": "Cliente desvinculado com sucesso"}

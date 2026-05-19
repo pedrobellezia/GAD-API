@@ -5,7 +5,7 @@ from .post import Post, PostStatus
 from .postmedia import PostMedia
 from .user import User, UserType
 from .writer import Writer
-from .invite_token import InviteToken, InviteTokenKind
+from .invite_token import InviteToken
 
 __all__ = [
     "User",
@@ -20,5 +20,4 @@ __all__ = [
     "PostMedia",
     "StorageProvider",
     "InviteToken",
-    "InviteTokenKind",
 ]
