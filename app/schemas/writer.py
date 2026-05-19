@@ -26,6 +26,13 @@ class WriterCreate(BaseModel):
         return user
 
 
+class WriterReadNoAgency(BaseModel):
+    id: UUID
+    user: UserRead
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class WriterRead(BaseModel):
     id: UUID
     user: UserRead

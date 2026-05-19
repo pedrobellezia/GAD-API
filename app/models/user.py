@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 import uuid
-from typing import Optional, Any
+from typing import Optional
 
 from sqlalchemy import String, Uuid, Enum as alchemyEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -41,6 +41,6 @@ class User(Base):
     agency: Mapped[Optional["Agency"]] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    token_info: Mapped[Any] = relationship(
+    token_info: Mapped[Optional["InviteToken"]] = relationship(
         back_populates="used_by", uselist=False, cascade="all, delete-orphan"
     )

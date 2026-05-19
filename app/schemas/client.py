@@ -34,6 +34,13 @@ class ClientRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ClientReadNoAgency(BaseModel):
+    id: UUID
+    user: UserRead
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ClientFilter(BaseModel):
     id: Optional[UUID] = None
     user_name: Optional[str] = None

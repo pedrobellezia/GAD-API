@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import enum
 import uuid
-from typing import Any
 
 from sqlalchemy import String, Uuid, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -25,5 +24,5 @@ class InviteToken(Base):
         Uuid, ForeignKey("agencies.id"), nullable=False
     )
 
-    agency: Mapped[Any] = relationship(back_populates="invite_tokens")
-    used_by: Mapped[Any] = relationship(back_populates="token_info", uselist=False)
+    agency: Mapped["Agency"] = relationship(back_populates="invite_tokens")
+    used_by: Mapped["User"] = relationship(back_populates="token_info", uselist=False)
