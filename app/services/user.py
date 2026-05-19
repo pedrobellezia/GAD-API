@@ -1,9 +1,14 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core import pswd_hasher
-from app.models import User
+from app.models import User, Client, Writer
 from app.schemas import UserCreate, UserFilter
+
+Profile = Client | Writer | None
 
 
 async def get_users(db: AsyncSession, filters: UserFilter) -> list[User]:
@@ -31,3 +36,15 @@ async def create_user(db: AsyncSession, user_data: UserCreate):
     await db.commit()
     await db.refresh(new_user)
     return new_user
+
+
+async def get_profile(
+    db: AsyncSession,
+    user_id: UUID,
+) -> Profile:
+    user = await db.scalar(
+        select(User)
+        .options(selectinload(User.client), selectinload(User.writer))
+        .where(User.id == user_id)
+    )
+    return None if not user else user.client or user.writer

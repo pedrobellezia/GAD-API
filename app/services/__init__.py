@@ -3,7 +3,7 @@ from .auth import login, register
 from .client import create_client, get_clients
 from .invite_token import create_invite_tokens
 
-from .user import create_user, get_users
+from .user import create_user, get_users, get_profile
 from .writer import create_writer, get_writers
 
 __all__ = [
@@ -18,4 +18,5 @@ __all__ = [
     "login",
     "register",
     "create_invite_tokens",
+    "get_profile",
 ]

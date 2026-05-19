@@ -15,7 +15,7 @@ from app.schemas import (
     InviteTokenRead,
     WriterReadNoAgency,
 )
-from app.services import create_invite_tokens
+from app.services import create_invite_tokens, get_profile
 
 router = APIRouter()
 
@@ -64,50 +64,31 @@ async def route_agency_writers(
 # unlink
 
 
-@router.get(path="/me/clients/unlink/{client_id}", status_code=200)
+@router.post(path="/me/unlink/{user_id}", status_code=200)
 async def route_agency_client_unlink(
-    client_id: UUID,
+    user_id: UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_agency),
 ):
-    client = await db.scalar(
-        select(Client).where(Client.id == client_id).where(Client.agency_id == user.id)
-    )
 
-    if not client:
+    profile = await get_profile(db=db, user_id=user_id)
+    if not profile:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Cliente nao encontrado",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario nao encontrado"
         )
-
-    client.agency_id = None
-    await db.commit()
-    return {"detail": "Cliente desvinculado com sucesso"}
-
-
-@router.get(
-    path="/me/writers/unlink/{writer_id}",
-    response_model=list[WriterReadNoAgency],
-    status_code=200,
-)
-async def route_agency_writer_unlink(
-    writer_id: UUID,
-    user: User = Depends(get_current_agency),
-    db: AsyncSession = Depends(get_db),
-):
-    writer = await db.scalar(
-        select(Writer).where(Writer.id == writer_id).where(Writer.agency_id == user.id)
-    )
-
-    if not writer:
+    if not profile.agency_id:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Writer nao encontrado",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Usuario nao esta vinculado a nenhuma agencia",
         )
-
-    writer.agency_id = None
+    if profile.agency_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario nao esta vinculado a sua agencia",
+        )
+    profile.agency_id = None
     await db.commit()
-    return {"detail": "Writer desvinculado com sucesso"}
+    return {"detail": "Usuario desvinculado com sucesso"}
 
 
 # invite tokens
