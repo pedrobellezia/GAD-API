@@ -6,7 +6,7 @@ from pydantic_core import PydanticCustomError
 
 from app.models import UserType
 from app.schemas.user import UserCreate, UserRead
-from app.utils import CNPJ
+from app.utils.types import CNPJ
 
 
 class AgencyCreate(BaseModel):

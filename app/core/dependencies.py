@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from app.utils.types import Member
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
@@ -61,37 +62,33 @@ async def get_current_user(
     return user
 
 
-def _require_user_type(user: User, expected_type: UserType) -> User:
-    if user.type != expected_type:
+async def get_current_member(
+    user: User = Depends(get_current_user),
+) -> Member:
+    if user.agency:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Agencias nao tem acesso a este recurso",
+        )
+
+    member = user.client or user.writer
+
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario nao tem perfil de cliente ou escritor",
+        )
+
+    return member
+
+
+async def get_current_agency(user: User = Depends(get_current_user)) -> User:
+    if user.type != UserType.agency:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Usuario nao autorizado",
         )
-    return user
 
-
-async def get_current_client(user: User = Depends(get_current_user)) -> User:
-    _require_user_type(user, UserType.client)
-    if not user.client:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario nao possui perfil de cliente",
-        )
-    return user
-
-
-async def get_current_writer(user: User = Depends(get_current_user)) -> User:
-    _require_user_type(user, UserType.writer)
-    if not user.writer:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario nao possui perfil de writer",
-        )
-    return user
-
-
-async def get_current_agency(user: User = Depends(get_current_user)) -> User:
-    _require_user_type(user, UserType.agency)
     if not user.agency:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

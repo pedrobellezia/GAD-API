@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import contains_eager, aliased
+from sqlalchemy.orm import contains_eager, aliased, selectinload
 
 from app.core import pswd_hasher
 from app.models import Writer, Agency, User, UserType
@@ -46,7 +46,7 @@ async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
 
 
 async def create_writer(db: AsyncSession, writer_data: WriterCreate) -> None:
-    async with db.begin_nested():
+    async with db.begin():
         new_user = User(**writer_data.user.model_dump(exclude={"pswd"}))
         new_user.pswd = pswd_hasher.hash(writer_data.user.pswd)
         new_user.type = UserType.writer
@@ -56,4 +56,14 @@ async def create_writer(db: AsyncSession, writer_data: WriterCreate) -> None:
         new_writer = Writer(id=new_user.id, agency_id=writer_data.agency_id)
         db.add(new_writer)
 
-    await db.commit()
+
+async def get_writer_me(db: AsyncSession, user_id) -> Writer:
+    writer = await db.scalar(
+        select(Writer)
+        .options(
+            selectinload(Writer.user),
+            selectinload(Writer.agency).selectinload(Agency.user),
+        )
+        .where(Writer.id == user_id)
+    )
+    return writer

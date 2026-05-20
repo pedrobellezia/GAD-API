@@ -3,7 +3,7 @@ from typing import Optional, Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from app.utils import NonEmptyStr
+from app.utils.types import NonEmptyStr
 from app.models import UserType
 
 

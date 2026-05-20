@@ -11,17 +11,15 @@ from app.handlers import (
 )
 from app.router import (
     agency_router,
-    client_router,
-    writer_router,
     auth_router,
+    me_router,
 )
 
 app = FastAPI(title="Fenix API")
 
 app.include_router(agency_router, prefix="/agency", tags=["agency"])
-app.include_router(client_router, prefix="/client", tags=["client"])
-app.include_router(writer_router, prefix="/writer", tags=["writer"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(me_router, prefix="/me", tags=["me"])
 
 app.add_exception_handler(RequestValidationError, request_validation_handler)
 app.add_exception_handler(ResponseValidationError, response_validation_handler)

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.utils import NonEmptyStr
+from app.utils.types import NonEmptyStr
 
 
 class InviteTokenBatchCreate(BaseModel):
