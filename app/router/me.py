@@ -124,7 +124,10 @@ async def route_get_clients(
     user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     if user.client:
-        return await get_my_clients(db=db, agency_id=user.client.agency_id)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Clientes nao tem acesso a este recurso",
+        )
     elif user.writer:
         return await get_my_clients(db=db, agency_id=user.writer.agency_id)
     elif user.agency:
@@ -142,7 +145,10 @@ async def route_get_writers(
     if user.client:
         return await get_my_writers(db=db, agency_id=user.client.agency_id)
     elif user.writer:
-        return await get_my_writers(db=db, agency_id=user.writer.agency_id)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Escritores nao tem acesso a este recurso",
+        )
     elif user.agency:
         return await get_my_writers(db=db, agency_id=user.id)
     raise HTTPException(
