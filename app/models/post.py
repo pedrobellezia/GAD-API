@@ -37,11 +37,7 @@ class Post(Base):
         Uuid, ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
     )
 
-    created_by_writer_id: Mapped[uuid.UUID | None] = mapped_column(
-        Uuid, ForeignKey("writers.id", ondelete="SET NULL"), nullable=True
-    )
-
-    updated_by_writer_id: Mapped[uuid.UUID | None] = mapped_column(
+    writer_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("writers.id", ondelete="SET NULL"), nullable=True
     )
 
@@ -60,12 +56,18 @@ class Post(Base):
         default=1,
     )
 
-    agency = relationship("Agency")
-    client = relationship("Client")
+    update_counter: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+    )
 
-    created_by_writer = relationship("Writer", foreign_keys=[created_by_writer_id])
-    updated_by_writer = relationship("Writer", foreign_keys=[updated_by_writer_id])
+    agency: Mapped["Agency"] = relationship(back_populates="posts")
+    client: Mapped["Client"] = relationship(back_populates="posts")
+    writer: Mapped["Writer"] = relationship(back_populates="posts")
 
-    medias = relationship(
-        "PostMedia", back_populates="post", cascade="all, delete-orphan"
+    medias: Mapped[list["PostMedia"]] = relationship(
+        "PostMedia",
+        back_populates="post",
+        cascade="all, delete-orphan",
     )

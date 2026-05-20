@@ -32,3 +32,6 @@ class Agency(Base):
     invite_tokens: Mapped[List["InviteToken"]] = relationship(
         back_populates="agency", cascade="all, delete-orphan"
     )
+    posts: Mapped[List["Post"]] = relationship(
+        back_populates="agency", cascade="all, delete-orphan"
+    )

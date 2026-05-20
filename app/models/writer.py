@@ -19,3 +19,9 @@ class Writer(Base):
 
     user: Mapped["User"] = relationship(back_populates="writer")
     agency: Mapped["Agency"] = relationship(back_populates="writers")
+    medias: Mapped[list["Media"]] = relationship(
+        back_populates="writer", cascade="all, delete-orphan"
+    )
+    posts: Mapped[list["Post"]] = relationship(
+        back_populates="writer", cascade="all, delete-orphan"
+    )

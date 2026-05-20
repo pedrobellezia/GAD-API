@@ -19,3 +19,6 @@ class Client(Base):
 
     user: Mapped["User"] = relationship(back_populates="client")
     agency: Mapped["Agency"] = relationship(back_populates="clients")
+    posts: Mapped[list["Post"]] = relationship(
+        back_populates="client", cascade="all, delete-orphan"
+    )

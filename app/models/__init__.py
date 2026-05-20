@@ -1,6 +1,6 @@
 from .agency import Agency
 from .client import Client
-from .media import Media, MediaType, StorageProvider
+from .media import Media, MediaType
 from .post import Post, PostStatus
 from .postmedia import PostMedia
 from .user import User, UserType
@@ -18,6 +18,5 @@ __all__ = [
     "Post",
     "PostStatus",
     "PostMedia",
-    "StorageProvider",
     "InviteToken",
 ]
