@@ -1,6 +1,5 @@
 from uuid import UUID
 
-from app.utils.types import Member
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
@@ -10,11 +9,13 @@ from sqlalchemy.orm import selectinload
 from app.core.database import get_db
 from app.core.security import bearer_scheme, decode_token
 from app.models import User, UserType
+from app.utils.types import Member
 
 
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    user_type: UserType = None,
 ) -> User:
     if not credentials or credentials.scheme.lower() != "bearer":
         raise HTTPException(
@@ -42,14 +43,21 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    load_options = {
+        UserType.client: selectinload(User.client),
+        UserType.writer: selectinload(User.writer),
+        UserType.agency: selectinload(User.agency),
+        UserType.designer: selectinload(User.designer),
+    }
+
+    if user_type:
+        options = [load_options[user_type]]
+    else:
+        options = list(load_options.values())
+
     user = await db.scalar(
         select(User)
-        .options(
-            selectinload(User.client),
-            selectinload(User.writer),
-            selectinload(User.agency),
-            selectinload(User.designer),
-        )
+        .options(*options)
         .where(User.id == user_uuid)
     )
 
