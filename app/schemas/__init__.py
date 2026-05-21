@@ -1,5 +1,5 @@
 from .agency import AgencyCreate, AgencyRead, AgencyFilter
-from .auth import RegisterPayload, LoginPayload, LoginResponse
+from .auth import RegisterPayload, LoginPayload, LoginResponse, JwtPayload
 from .client import ClientFilter, ClientCreate, ClientRead, ClientReadNoAgency
 from .designer import (
     DesignerCreate,
@@ -38,4 +38,5 @@ __all__ = [
     "WriterReadNoAgency",
     "DetailsResponse",
     "LoginResponse",
+    "JwtPayload",
 ]

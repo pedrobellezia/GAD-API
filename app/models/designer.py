@@ -19,6 +19,6 @@ class Designer(Base):
 
     user: Mapped["User"] = relationship(back_populates="designer")
     agency: Mapped["Agency"] = relationship(back_populates="designers")
-    posts: Mapped[list["Post"]] = relationship(
-        back_populates="designer", cascade="all, delete-orphan"
+    medias: Mapped[list["Media"]] = relationship(
+        "Media", back_populates="designer", cascade="all, delete-orphan"
     )

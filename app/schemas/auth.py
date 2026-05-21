@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -16,6 +17,13 @@ class LoginPayload(BaseModel):
 
 class LoginResponse(BaseModel):
     token: str
+
+
+class JwtPayload(BaseModel):
+    sub: UUID
+    exp: int
+
+    model_config = {"extra": "forbid"}
 
 
 RegisterPayload = Annotated[

@@ -19,8 +19,8 @@ class Media(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
 
-    writer_id: Mapped[uuid.UUID | None] = mapped_column(
-        Uuid, ForeignKey("writers.id", ondelete="SET NULL"), nullable=True
+    designer_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("designers.id", ondelete="SET NULL"), nullable=True
     )
 
     alias: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -44,4 +44,4 @@ class Media(Base):
         cascade="all, delete-orphan",
     )
 
-    writer: Mapped["Writer"] = relationship("Writer", back_populates="medias")
+    designer: Mapped["Designer"] = relationship("Designer", back_populates="medias")

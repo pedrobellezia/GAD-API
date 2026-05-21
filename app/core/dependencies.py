@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
@@ -9,14 +7,12 @@ from sqlalchemy.orm import selectinload
 from app.core.database import get_db
 from app.core.security import bearer_scheme, decode_token
 from app.models import User, UserType
-from app.utils.types import Member
+from app.schemas import JwtPayload
 
 
-async def get_current_user(
-    db: AsyncSession = Depends(get_db),
+async def get_jwt_payload(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    user_type: UserType = None,
-) -> User:
+) -> JwtPayload:
     if not credentials or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -24,83 +20,46 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    payload = decode_token(credentials.credentials)
-    user_id = payload.get("sub")
+    return decode_token(credentials.credentials)
 
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token JWT invalido",
-            headers={"WWW-Authenticate": "Bearer"},
+
+def get_current_user(*req_types: UserType):
+    async def dependency(
+        db: AsyncSession = Depends(get_db),
+        payload: JwtPayload = Depends(get_jwt_payload),
+    ) -> User:
+
+        user_id = payload.sub
+
+        load_options = {
+            UserType.client: selectinload(User.client),
+            UserType.writer: selectinload(User.writer),
+            UserType.agency: selectinload(User.agency),
+            UserType.designer: selectinload(User.designer),
+        }
+
+        if req_types:
+            options = [load_options[q] for q in req_types]
+        else:
+            options = list(load_options.values())
+
+        user: User = await db.scalar(
+            select(User).options(*options).where(User.id == user_id)
         )
 
-    try:
-        user_uuid = UUID(user_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token JWT invalido",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Usuario nao encontrado",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
-    load_options = {
-        UserType.client: selectinload(User.client),
-        UserType.writer: selectinload(User.writer),
-        UserType.agency: selectinload(User.agency),
-        UserType.designer: selectinload(User.designer),
-    }
+        if req_types and user.type not in req_types:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Usuario nao autorizado para este recurso",
+            )
 
-    if user_type:
-        options = [load_options[user_type]]
-    else:
-        options = list(load_options.values())
+        return user
 
-    user = await db.scalar(
-        select(User)
-        .options(*options)
-        .where(User.id == user_uuid)
-    )
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario nao encontrado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    return user
-
-
-async def get_current_member(
-    user: User = Depends(get_current_user),
-) -> Member:
-    if user.agency:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Agencias nao tem acesso a este recurso",
-        )
-
-    member = user.client or user.writer or user.designer
-
-    if not member:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario nao tem perfil de cliente, escritor ou designer",
-        )
-
-    return member
-
-
-async def get_current_agency(user: User = Depends(get_current_user)) -> User:
-    if user.type != UserType.agency:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario nao autorizado",
-        )
-
-    if not user.agency:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario nao possui perfil de agencia",
-        )
-    return user
+    return dependency

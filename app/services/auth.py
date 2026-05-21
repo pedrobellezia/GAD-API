@@ -39,13 +39,7 @@ async def login(db: AsyncSession, payload: LoginPayload) -> str:
             detail="Credenciais inválidas",
         )
 
-    token = create_token(
-        user_id=result.id,
-        **{
-            "type": result.type.value,
-            "agency_id": str(result.agency.id) if result.agency else None,
-        },
-    )
+    token = create_token(user_id=result.id)
 
     return token
 

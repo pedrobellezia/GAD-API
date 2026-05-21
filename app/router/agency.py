@@ -2,10 +2,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.dependencies import get_current_agency
+from app.core.dependencies import get_current_user
 
 from app.core.database import get_db
-from app.models import User
+from app.models import User, UserType
 from app.schemas import (
     DetailsResponse,
 )
@@ -20,7 +20,7 @@ router = APIRouter()
 async def route_agency_client_unlink(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_agency),
+    user: User = Depends(get_current_user(UserType.agency)),
 ):
     profile = await get_profile(db=db, user_id=user_id)
     if not profile:
