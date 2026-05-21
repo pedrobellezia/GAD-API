@@ -89,7 +89,7 @@ async def route_writer_link_agency(
     return {"details": "Usuário vinculado a agencia com sucesso"}
 
 
-@router.post(path="/unlink", status_code=200, response_model=DetailsResponse)
+@router.delete(path="/unlink", status_code=200, response_model=DetailsResponse)
 async def route_writer_unlink_agency(
     user: User = Depends(
         get_current_user(UserType.writer, UserType.client, UserType.designer)

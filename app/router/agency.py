@@ -14,8 +14,8 @@ from app.services import get_profile
 router = APIRouter()
 
 
-@router.post(
-    path="/me/unlink/{user_id}", status_code=200, response_model=DetailsResponse
+@router.delete(
+    path="/member/{user_id}/unlink", status_code=200, response_model=DetailsResponse
 )
 async def route_agency_client_unlink(
     user_id: UUID,
