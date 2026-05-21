@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core import pswd_hasher
-from app.models import User, Client, Writer
+from app.models import User, Client, Writer, Designer
 from app.schemas import UserCreate, UserFilter
 
 
@@ -38,13 +38,17 @@ async def create_user(db: AsyncSession, user_data: UserCreate):
 
 async def get_profile(
     db: AsyncSession, *, user_id: UUID | None = None, user: User | None = None
-) -> Client | Writer | None:
+) -> Client | Writer | Designer | None:
     if not user and not user_id:
         raise ValueError("user_id ou user precisam ser fornecidos")
     if user_id:
         user = await db.scalar(
             select(User)
-            .options(selectinload(User.client), selectinload(User.writer))
+            .options(
+                selectinload(User.client),
+                selectinload(User.writer),
+                selectinload(User.designer),
+            )
             .where(User.id == user_id)
         )
-    return None if not user else user.client or user.writer
+    return None if not user else user.client or user.writer or user.designer

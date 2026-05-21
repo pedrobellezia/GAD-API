@@ -29,6 +29,9 @@ class Agency(Base):
     writers: Mapped[List["Writer"]] = relationship(
         back_populates="agency", cascade="all, delete-orphan"
     )
+    designers: Mapped[List["Designer"]] = relationship(
+        back_populates="agency", cascade="all, delete-orphan"
+    )
     invite_tokens: Mapped[List["InviteToken"]] = relationship(
         back_populates="agency", cascade="all, delete-orphan"
     )

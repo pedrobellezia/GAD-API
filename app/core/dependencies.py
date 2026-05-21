@@ -48,6 +48,7 @@ async def get_current_user(
             selectinload(User.client),
             selectinload(User.writer),
             selectinload(User.agency),
+            selectinload(User.designer),
         )
         .where(User.id == user_uuid)
     )
@@ -71,12 +72,12 @@ async def get_current_member(
             detail="Agencias nao tem acesso a este recurso",
         )
 
-    member = user.client or user.writer
+    member = user.client or user.writer or user.designer
 
     if not member:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario nao tem perfil de cliente ou escritor",
+            detail="Usuario nao tem perfil de cliente, escritor ou designer",
         )
 
     return member

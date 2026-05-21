@@ -63,3 +63,10 @@ async def get_my_writers(db: AsyncSession, agency_id) -> list[User]:
         select(User).join(User.writer).where(User.writer.has(agency_id=agency_id))
     )
     return list(result.scalars().all())
+
+
+async def get_my_designers(db: AsyncSession, agency_id) -> list[User]:
+    result = await db.execute(
+        select(User).join(User.designer).where(User.designer.has(agency_id=agency_id))
+    )
+    return list(result.scalars().all())

@@ -15,6 +15,7 @@ class UserType(str, enum.Enum):
     client = "client"
     writer = "writer"
     agency = "agency"
+    designer = "designer"
 
 
 class User(Base):
@@ -36,5 +37,8 @@ class User(Base):
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
     agency: Mapped[Optional["Agency"]] = relationship(
+        back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    designer: Mapped[Optional["Designer"]] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )

@@ -12,7 +12,9 @@ from app.schemas import (
     WriterCreate,
     ClientCreate,
 )
+from app.schemas.designer import DesignerCreate
 from app.services import create_agency
+from app.services.designer import create_designer
 from app.services.writer import create_writer
 from app.services.client import create_client
 
@@ -58,3 +60,6 @@ async def register(db: AsyncSession, payload: RegisterPayload) -> None:
 
         case ClientCreate():
             await create_client(db=db, client_data=payload)
+
+        case DesignerCreate():
+            await create_designer(db=db, designer_data=payload)

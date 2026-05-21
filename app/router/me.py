@@ -12,17 +12,26 @@ from app.schemas import (
     AgencyRead,
     ClientRead,
     WriterRead,
+    DesignerRead,
 )
-from app.services.agency import get_agency_me, get_my_clients, get_my_writers
+from app.services import get_my_designers
+from app.services.agency import (
+    get_agency_me,
+    get_my_clients,
+    get_my_writers,
+)
 from app.services.client import get_client_me
 from app.services.writer import get_writer_me
+from app.services.designer import get_designer_me
 from app.utils.types import Member
 
 router = APIRouter()
 
 
 @router.get(
-    path="", status_code=200, response_model=ClientRead | WriterRead | AgencyRead
+    path="",
+    status_code=200,
+    response_model=ClientRead | WriterRead | AgencyRead | DesignerRead,
 )
 async def route_get_me(
     user: User = Depends(get_current_user),
@@ -32,9 +41,10 @@ async def route_get_me(
         q = await get_agency_me(db=db, user_id=user.id)
     elif user.client:
         q = await get_client_me(db=db, user_id=user.id)
-        print(ClientRead.model_validate(q))
     elif user.writer:
         q = await get_writer_me(db=db, user_id=user.id)
+    elif user.designer:
+        q = await get_designer_me(db=db, user_id=user.id)
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -130,6 +140,8 @@ async def route_get_clients(
         )
     elif user.writer:
         return await get_my_clients(db=db, agency_id=user.writer.agency_id)
+    elif user.designer:
+        return await get_my_clients(db=db, agency_id=user.designer.agency_id)
     elif user.agency:
         return await get_my_clients(db=db, agency_id=user.id)
     raise HTTPException(
@@ -149,8 +161,31 @@ async def route_get_writers(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Escritores nao tem acesso a este recurso",
         )
+    elif user.designer:
+        return await get_my_writers(db=db, agency_id=user.designer.agency_id)
     elif user.agency:
         return await get_my_writers(db=db, agency_id=user.id)
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Tipo de usuário inválido",
+    )
+
+
+@router.get("/designers", response_model=list[DesignerRead], status_code=200)
+async def route_get_designers(
+    user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
+    if user.client:
+        return await get_my_designers(db=db, agency_id=user.client.agency_id)
+    elif user.designer:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Designers nao tem acesso a este recurso",
+        )
+    elif user.writer:
+        return await get_my_designers(db=db, agency_id=user.writer.agency_id)
+    elif user.agency:
+        return await get_my_designers(db=db, agency_id=user.id)
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Tipo de usuário inválido",

@@ -6,6 +6,7 @@ from .postmedia import PostMedia
 from .user import User, UserType
 from .writer import Writer
 from .invite_token import InviteToken
+from .designer import Designer
 
 __all__ = [
     "User",
@@ -19,4 +20,5 @@ __all__ = [
     "PostStatus",
     "PostMedia",
     "InviteToken",
+    "Designer",
 ]
