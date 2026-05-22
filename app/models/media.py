@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from enum import Enum
 
-from sqlalchemy import Enum as SQLEnum, String, Uuid, ForeignKey, BigInteger, Text
+from sqlalchemy import Enum as SQLEnum, String, Uuid, ForeignKey, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
@@ -24,8 +24,6 @@ class Media(Base):
     )
 
     alias: Mapped[str] = mapped_column(String(255), nullable=False)
-
-    url: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
 
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
 

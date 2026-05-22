@@ -6,7 +6,7 @@ from pydantic_core import PydanticCustomError
 
 from app.models import UserType
 from app.schemas import AgencyRead
-# importar diretamente pra evitar circular import
+
 from app.schemas.user import UserCreate, UserRead
 
 

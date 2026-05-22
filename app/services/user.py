@@ -37,18 +37,15 @@ async def create_user(db: AsyncSession, user_data: UserCreate):
 
 
 async def get_profile(
-    db: AsyncSession, *, user_id: UUID | None = None, user: User | None = None
+    db: AsyncSession, *, user_id: UUID
 ) -> Client | Writer | Designer | None:
-    if not user and not user_id:
-        raise ValueError("user_id ou user precisam ser fornecidos")
-    if user_id:
-        user = await db.scalar(
-            select(User)
-            .options(
-                selectinload(User.client),
-                selectinload(User.writer),
-                selectinload(User.designer),
-            )
-            .where(User.id == user_id)
+    user = await db.scalar(
+        select(User)
+        .options(
+            selectinload(User.client),
+            selectinload(User.writer),
+            selectinload(User.designer),
         )
+        .where(User.id == user_id)
+    )
     return None if not user else user.client or user.writer or user.designer
