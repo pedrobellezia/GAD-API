@@ -3,6 +3,8 @@ from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
+from app.exceptions import CustomAppError
+
 
 async def request_validation_handler(_: Request, exc: RequestValidationError):
     formatted_errors = []
@@ -58,4 +60,13 @@ async def integrity_error_handler(_: Request, exc: IntegrityError):
 
     return JSONResponse(
         status_code=400, content={"error": "IntegrityError", "detail": message}
+    )
+
+
+async def custom_error_handler(_: Request, exc: CustomAppError):
+    status_code = exc.error_type.value
+
+    return JSONResponse(
+        status_code=status_code,
+        content={"error": exc.error_type.name, "detail": exc.message},
     )
