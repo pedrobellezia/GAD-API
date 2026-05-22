@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from sqlalchemy.exc import IntegrityError
 
-from app.handlers import (
+from app.exceptions import (
     request_validation_handler,
     response_validation_handler,
     integrity_error_handler,
