@@ -19,6 +19,12 @@ JWT_ALGORITHM = "HS256"
 JWT_EXPIRES_MINUTES = 60 * 36  # 36 horas
 LOCAL_STORAGE_PATH = Path(get_env("LOCAL_STORAGE", required=True))
 MAX_FILE_BYTES = 200 * 1024 * 1024  # 200mb
+CHUNKS_PER_READ = 10 * 1024 * 1024  # 10mb
+ALLOWED_FILE_TYPES = {
+    "image/jpeg": ".jpeg",
+    "image/png": ".png",
+    "video/mp4": ".mp4",
+}
 
 if not LOCAL_STORAGE_PATH.exists():
     LOCAL_STORAGE_PATH.mkdir(parents=True)

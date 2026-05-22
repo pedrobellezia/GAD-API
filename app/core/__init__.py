@@ -7,6 +7,8 @@ from .config import (
     LOCAL_STORAGE_PATH,
     get_env,
     MAX_FILE_BYTES,
+    ALLOWED_FILE_TYPES,
+    CHUNKS_PER_READ,
 )
 from .database import Base, get_db
 from .security import (
@@ -15,6 +17,7 @@ from .security import (
     bearer_scheme,
     create_token,
     decode_token,
+    mime_detector,
 )
 
 __all__ = [
@@ -33,4 +36,7 @@ __all__ = [
     "decode_token",
     "LOCAL_STORAGE_PATH",
     "MAX_FILE_BYTES",
+    "ALLOWED_FILE_TYPES",
+    "CHUNKS_PER_READ",
+    "mime_detector",
 ]

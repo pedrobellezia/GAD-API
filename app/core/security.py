@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader, HTTPBearer
 from pwdlib import PasswordHash
 from pydantic import ValidationError
+from magic import Magic
 
 from app.core import (
     API_KEY_ENV_NAME,
@@ -20,6 +21,7 @@ from app.schemas import JwtPayload
 api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
 pswd_hasher = PasswordHash.recommended()
 bearer_scheme = HTTPBearer(auto_error=False)
+mime_detector = Magic(mime=True)
 
 
 def get_api_key(api_key: str | None = Depends(api_key_header)) -> str:
