@@ -1,8 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from fastapi import HTTPException, status
+
 from app.core import pswd_hasher, create_token
 from app.models import User
 from app.schemas import (
@@ -21,23 +21,28 @@ from app.services.client import create_client
 
 async def login(db: AsyncSession, payload: LoginPayload) -> str:
     result: User | None = await db.scalar(
-        select(User)
-        .options(selectinload(User.agency))
-        .where(User.email == payload.email)
+        text("SELECT * FROM get_user_for_auth(:email)"),
+        {"email": payload.email},
     )
+
     if not result:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciais inválidas",
         )
 
-    bar = pswd_hasher.verify(payload.pswd, result.pswd)
-
-    if not bar:
+    if not pswd_hasher.verify(payload.pswd, result.pswd):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciais inválidas",
         )
+
+    if result.deleted_at is not None:
+        await db.execute(
+            text("SELECT restore_user(:email)"),
+            {"email": payload.email},
+        )
+        await db.commit()
 
     token = create_token(user_id=result.id)
 

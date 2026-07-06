@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,6 +51,19 @@ async def route_get_me(
             detail="Tipo de usuário inválido",
         )
     return q
+
+@router.delete(
+    path="",
+    status_code=200,
+    response_model=DetailsResponse,
+)
+async def route_delete_me(
+    user: User = Depends(get_current_user()),
+    db: AsyncSession = Depends(get_db),
+):
+    user.deleted_at = datetime.now(timezone.utc)
+    await db.commit()
+    return {"details": "Usuário deletado com sucesso"}
 
 
 @router.post(path="/link", status_code=200, response_model=DetailsResponse)
