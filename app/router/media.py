@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi import APIRouter, Form, Depends, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, Form, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import LOCAL_STORAGE_PATH
@@ -81,4 +81,3 @@ async def route_upload_medias(
     finally:
         for file in files:
             await file.close()
-
