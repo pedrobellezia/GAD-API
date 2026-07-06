@@ -1,0 +1,58 @@
+# ─── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# ─── Ambientes virtuais ───────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ─── Configurações de IDE ─────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# ─── Git ──────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ─── Testes e cobertura ───────────────────────────────────────────────────────
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# ─── Linting ──────────────────────────────────────────────────────────────────
+.ruff_cache/
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+Dockerfile
+docker-compose.yaml
+docker-compose.yml
+.dockerignore
+
+# ─── Variáveis de ambiente (segurança) ───────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Logs e temporários ───────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+tmp/
+
+# ─── Storage local (montado como volume) ─────────────────────────────────────
+storage/
+
+# ─── Documentação ─────────────────────────────────────────────────────────────
+*.md
+README*
