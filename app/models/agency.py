@@ -14,27 +14,17 @@ class Agency(Base):
     __tablename__ = "agencies"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("users.id"), primary_key=True
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
     cnpj: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
 
     user: Mapped["User"] = relationship(back_populates="agency")
 
-    clients: Mapped[List["Client"]] = relationship(
-        back_populates="agency", cascade="all, delete-orphan"
-    )
-    writers: Mapped[List["Writer"]] = relationship(
-        back_populates="agency", cascade="all, delete-orphan"
-    )
-    designers: Mapped[List["Designer"]] = relationship(
-        back_populates="agency", cascade="all, delete-orphan"
-    )
+    clients: Mapped[List["Client"]] = relationship(back_populates="agency")
+    writers: Mapped[List["Writer"]] = relationship(back_populates="agency")
+    designers: Mapped[List["Designer"]] = relationship(back_populates="agency")
     invite_tokens: Mapped[List["InviteToken"]] = relationship(
         back_populates="agency", cascade="all, delete-orphan"
     )
-    posts: Mapped[List["Post"]] = relationship(
-        back_populates="agency", cascade="all, delete-orphan"
-    )
+    posts: Mapped[List["Post"]] = relationship(back_populates="agency")
+    medias: Mapped[List["Media"]] = relationship(back_populates="agency")

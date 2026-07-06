@@ -29,12 +29,12 @@ class Post(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
 
-    agency_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("agencies.id", ondelete="SET NULL"), nullable=True
     )
 
-    client_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
+    client_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("clients.id", ondelete="SET NULL"), nullable=True
     )
 
     writer_id: Mapped[uuid.UUID | None] = mapped_column(

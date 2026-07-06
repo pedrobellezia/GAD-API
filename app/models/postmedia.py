@@ -24,10 +24,13 @@ class PostMedia(Base):
     )
 
     media_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("medias.id", ondelete="CASCADE"), nullable=False, index=True
+        Uuid, ForeignKey("medias.id"), nullable=False, index=True
     )
 
     position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    post: Mapped["Post"] = relationship("Post", back_populates="medias")
+    post: Mapped["Post"] = relationship(
+        "Post",
+        back_populates="medias",
+    )
     media: Mapped["Media"] = relationship("Media", back_populates="post_medias")

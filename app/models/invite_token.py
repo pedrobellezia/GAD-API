@@ -14,7 +14,7 @@ class InviteToken(Base):
     token: Mapped[str] = mapped_column(String(64), primary_key=True)
 
     agency_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("agencies.id"), nullable=False
+        Uuid, ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False
     )
 
     agency: Mapped["Agency"] = relationship(back_populates="invite_tokens")

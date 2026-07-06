@@ -23,6 +23,10 @@ class Media(Base):
         Uuid, ForeignKey("designers.id", ondelete="SET NULL"), nullable=True
     )
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("agencies.id", ondelete="SET NULL"), nullable=True
+    )
+
     alias: Mapped[str] = mapped_column(String(255), nullable=False)
 
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -37,9 +41,8 @@ class Media(Base):
     size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
     post_medias: Mapped[list["PostMedia"]] = relationship(
-        "PostMedia",
-        back_populates="media",
-        cascade="all, delete-orphan",
+        "PostMedia", back_populates="media"
     )
 
     designer: Mapped["Designer"] = relationship("Designer", back_populates="medias")
+    agency: Mapped["Agency"] = relationship("Agency", back_populates="medias")
