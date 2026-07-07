@@ -30,18 +30,13 @@ async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
 
 
 async def create_agency(db: AsyncSession, agency_data: AgencyCreate) -> None:
-    async with db.begin():
-        new_user = User(**agency_data.user.model_dump(exclude={"pswd"}))
-        new_user.pswd = pswd_hasher.hash(agency_data.user.pswd)
-        new_user.type = UserType.agency
-        db.add(new_user)
-        await db.flush()
-
-        new_agency = Agency(id=new_user.id, cnpj=agency_data.cnpj)
-        db.add(new_agency)
-        await db.flush()
-
-        await create_invite_tokens(db, agency_id=new_agency.id, quantity=10)
+    new_user = User(**agency_data.user.model_dump(exclude={"pswd"}))
+    new_user.pswd = pswd_hasher.hash(agency_data.user.pswd)
+    new_user.type = UserType.agency
+    db.add(new_user)
+    new_agency = Agency(id=new_user.id, cnpj=agency_data.cnpj)
+    db.add(new_agency)
+    await create_invite_tokens(db, agency_id=new_agency.id, quantity=10)
 
 
 async def get_agency_me(db: AsyncSession, user_id) -> Agency:

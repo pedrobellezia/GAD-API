@@ -46,15 +46,13 @@ async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
 
 
 async def create_writer(db: AsyncSession, writer_data: WriterCreate) -> None:
-    async with db.begin():
-        new_user = User(**writer_data.user.model_dump(exclude={"pswd"}))
-        new_user.pswd = pswd_hasher.hash(writer_data.user.pswd)
-        new_user.type = UserType.writer
-        db.add(new_user)
-        await db.flush()
+    new_user = User(**writer_data.user.model_dump(exclude={"pswd"}))
+    new_user.pswd = pswd_hasher.hash(writer_data.user.pswd)
+    new_user.type = UserType.writer
+    db.add(new_user)
 
-        new_writer = Writer(id=new_user.id, agency_id=writer_data.agency_id)
-        db.add(new_writer)
+    new_writer = Writer(id=new_user.id, agency_id=writer_data.agency_id)
+    db.add(new_writer)
 
 
 async def get_writer_me(db: AsyncSession, user_id) -> Writer:

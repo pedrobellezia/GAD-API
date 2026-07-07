@@ -12,11 +12,9 @@ async def create_invite_tokens(
     agency_id: UUID,
     quantity: int,
 ) -> None:
-
     tokens = [
         InviteToken(token=secrets.token_urlsafe(16), agency_id=agency_id)
         for _ in range(quantity)
     ]
 
     db.add_all(tokens)
-    await db.flush()

@@ -19,4 +19,5 @@ async def route_register(
     register_payload: RegisterPayload, db: AsyncSession = Depends(get_db)
 ):
     await register(db, register_payload)
+    await db.commit()
     return {"details": "Usuario criado com sucesso"}

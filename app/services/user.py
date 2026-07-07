@@ -31,7 +31,7 @@ async def create_user(db: AsyncSession, user_data: UserCreate):
     new_user = User(**user_data.model_dump(exclude={"pswd"}))
     new_user.pswd = pswd_hasher.hash(user_data.pswd)
     db.add(new_user)
-    await db.commit()
+
     await db.refresh(new_user)
     return new_user
 

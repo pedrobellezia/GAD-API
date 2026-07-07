@@ -84,23 +84,22 @@ async def route_writer_link_agency(
             detail="Usuário ja vinculado a uma agencia",
         )
 
-    async with db.begin():
-        token: InviteToken = await db.scalar(
-            select(InviteToken)
-            .where(InviteToken.token == payload.token)
-            .with_for_update()
+    token: InviteToken = await db.scalar(
+        select(InviteToken)
+        .where(InviteToken.token == payload.token)
+        .with_for_update()
+    )
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Token de convite invalido",
         )
 
-        if not token:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Token de convite invalido",
-            )
+    member.agency_id = token.agency_id
+    await db.delete(token)
 
-        member.agency_id = token.agency_id
-        await db.flush()
-        await db.delete(token)
-
+    await db.commit()
     return {"details": "Usuário vinculado a agencia com sucesso"}
 
 

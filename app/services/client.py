@@ -46,15 +46,13 @@ async def get_clients(db: AsyncSession, filters: ClientFilter) -> list[Client]:
 
 
 async def create_client(db: AsyncSession, client_data: ClientCreate) -> None:
-    async with db.begin():
-        new_user = User(**client_data.user.model_dump(exclude={"pswd"}))
-        new_user.pswd = pswd_hasher.hash(client_data.user.pswd)
-        new_user.type = UserType.client
-        db.add(new_user)
-        await db.flush()
+    new_user = User(**client_data.user.model_dump(exclude={"pswd"}))
+    new_user.pswd = pswd_hasher.hash(client_data.user.pswd)
+    new_user.type = UserType.client
+    db.add(new_user)
 
-        new_client = Client(id=new_user.id, agency_id=client_data.agency_id)
-        db.add(new_client)
+    new_client = Client(id=new_user.id, agency_id=client_data.agency_id)
+    db.add(new_client)
 
 
 async def get_client_me(db: AsyncSession, user_id) -> Client:

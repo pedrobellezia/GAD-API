@@ -55,5 +55,6 @@ async def route_agency_delete_invite_token(
         )
 
     await db.delete(invite_token)
+
     await db.commit()
     return {"details": "Token de convite removido com sucesso"}

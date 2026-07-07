@@ -63,8 +63,8 @@ async def route_upload_medias(
 
         if medias:
             db.add_all(medias)
-            await db.commit()
 
+        await db.commit()
         return {
             "details": "Upload concluído",
             "errors": file_errors or None,

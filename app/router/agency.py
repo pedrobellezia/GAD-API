@@ -38,5 +38,6 @@ async def route_agency_client_unlink(
             detail="Usuario nao esta vinculado a sua agencia",
         )
     profile.agency_id = None
+
     await db.commit()
     return {"details": "Usuario desvinculado com sucesso"}

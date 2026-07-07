@@ -42,7 +42,6 @@ async def login(db: AsyncSession, payload: LoginPayload) -> str:
             text("SELECT restore_user(:email)"),
             {"email": payload.email},
         )
-        await db.commit()
 
     token = create_token(user_id=result.id)
 

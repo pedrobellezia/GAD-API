@@ -21,12 +21,9 @@ async def get_designer_me(db: AsyncSession, user_id) -> Designer:
 
 
 async def create_designer(db: AsyncSession, designer_data: DesignerCreate) -> None:
-    async with db.begin():
-        new_user = User(**designer_data.user.model_dump(exclude={"pswd"}))
-        new_user.pswd = pswd_hasher.hash(designer_data.user.pswd)
-        new_user.type = UserType.designer
-        db.add(new_user)
-        await db.flush()
-
-        new_designer = Designer(id=new_user.id, agency_id=designer_data.agency_id)
-        db.add(new_designer)
+    new_user = User(**designer_data.user.model_dump(exclude={"pswd"}))
+    new_user.pswd = pswd_hasher.hash(designer_data.user.pswd)
+    new_user.type = UserType.designer
+    db.add(new_user)
+    new_designer = Designer(id=new_user.id, agency_id=designer_data.agency_id)
+    db.add(new_designer)

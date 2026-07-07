@@ -29,7 +29,6 @@ AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
     autocommit=False,
-    autoflush=False,
     expire_on_commit=False,
 )
 
@@ -51,10 +50,4 @@ class Base(DeclarativeBase):
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
-        try:
             yield session
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
