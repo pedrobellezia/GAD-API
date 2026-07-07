@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager, selectinload
 
 from app.core import pswd_hasher
-from app.models import Agency, User, UserType
+from app.models import Agency, User, UserType, Client, Writer, Designer
 from app.schemas import AgencyCreate, AgencyFilter
 from app.services.invite_token import create_invite_tokens
 
@@ -51,22 +51,34 @@ async def get_agency_me(db: AsyncSession, user_id) -> Agency:
     return agency
 
 
-async def get_my_clients(db: AsyncSession, agency_id) -> list[User]:
+async def get_my_clients(db: AsyncSession, agency_id) -> list[Client]:
+    if not agency_id:
+        return []
     result = await db.execute(
-        select(User).join(User.client).where(User.client.has(agency_id=agency_id))
+        select(Client)
+        .options(selectinload(Client.user))
+        .where(Client.agency_id == agency_id)
     )
     return list(result.scalars().all())
 
 
-async def get_my_writers(db: AsyncSession, agency_id) -> list[User]:
+async def get_my_writers(db: AsyncSession, agency_id) -> list[Writer]:
+    if not agency_id:
+        return []
     result = await db.execute(
-        select(User).join(User.writer).where(User.writer.has(agency_id=agency_id))
+        select(Writer)
+        .options(selectinload(Writer.user))
+        .where(Writer.agency_id == agency_id)
     )
     return list(result.scalars().all())
 
 
-async def get_my_designers(db: AsyncSession, agency_id) -> list[User]:
+async def get_my_designers(db: AsyncSession, agency_id) -> list[Designer]:
+    if not agency_id:
+        return []
     result = await db.execute(
-        select(User).join(User.designer).where(User.designer.has(agency_id=agency_id))
+        select(Designer)
+        .options(selectinload(Designer.user))
+        .where(Designer.agency_id == agency_id)
     )
     return list(result.scalars().all())
