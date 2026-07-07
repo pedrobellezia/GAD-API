@@ -28,7 +28,7 @@ mime_detector = Magic(mime=True)
 def get_api_key(api_key: str | None = Depends(api_key_header)) -> str:
     expected_key = get_env(API_KEY_ENV_NAME, required=True)
 
-    if not api_key or secrets.compare_digest(api_key, expected_key):
+    if not (api_key and secrets.compare_digest(api_key, expected_key)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Chave de API inválida ou ausente",
