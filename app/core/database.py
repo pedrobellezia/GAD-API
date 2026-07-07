@@ -16,7 +16,14 @@ DATABASE_URL = get_env("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 
-engine = create_async_engine(DATABASE_URL, pool_pre_ping=True)
+engine = create_async_engine(
+    DATABASE_URL,
+    pool_size=20,
+    max_overflow=10,
+    pool_recycle=1800,
+    pool_timeout=30,
+    pool_pre_ping=True,
+)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
