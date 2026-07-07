@@ -13,8 +13,8 @@ async def get_clients(db: AsyncSession, filters: ClientFilter) -> list[Client]:
     query = (
         select(Client)
         .join(Client.user)
-        .join(Client.agency)
-        .join(agency_user, Agency.user)
+        .outerjoin(Client.agency)
+        .outerjoin(agency_user, Agency.user)
         .options(
             contains_eager(Client.user),
             contains_eager(Client.agency).contains_eager(

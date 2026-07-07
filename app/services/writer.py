@@ -13,8 +13,8 @@ async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
     query = (
         select(Writer)
         .join(Writer.user)
-        .join(Writer.agency)
-        .join(agency_user, Agency.user)  # type: ignore
+        .outerjoin(Writer.agency)
+        .outerjoin(agency_user, Agency.user)  # type: ignore
         .options(
             contains_eager(Writer.user),
             contains_eager(Writer.agency).contains_eager(
@@ -37,7 +37,7 @@ async def get_writers(db: AsyncSession, filters: WriterFilter) -> list[Writer]:
         query = query.where(User.email == filters.user_email)
 
     if filters.agency_name:
-        query = query.where(Agency.user.name.ilike(f"%{filters.agency_name}%"))
+        query = query.where(agency_user.name.ilike(f"%{filters.agency_name}%"))
 
     query = query.offset(filters.skip).limit(filters.limit)
 
