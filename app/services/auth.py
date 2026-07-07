@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import text, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import HTTPException, status
@@ -20,10 +20,10 @@ from app.services.client import create_client
 
 
 async def login(db: AsyncSession, payload: LoginPayload) -> str:
-    result: User | None = await db.scalar(
-        text("SELECT * FROM get_user_for_auth(:email)"),
-        {"email": payload.email},
-    )
+    query = select(User).from_statement(text("SELECT * FROM get_user_for_auth(:email)"))
+    result: User | None = (
+        await db.execute(query, {"email": payload.email})
+    ).scalar_one_or_none()
 
     if not result:
         raise HTTPException(
