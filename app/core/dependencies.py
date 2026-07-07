@@ -31,21 +31,7 @@ def get_current_user(*req_types: UserType):
 
         user_id = payload.sub
 
-        load_options = {
-            UserType.client: selectinload(User.client),
-            UserType.writer: selectinload(User.writer),
-            UserType.agency: selectinload(User.agency),
-            UserType.designer: selectinload(User.designer),
-        }
-
-        if req_types:
-            options = [load_options[q] for q in req_types]
-        else:
-            options = list(load_options.values())
-
-        user: User = await db.scalar(
-            select(User).options(*options).where(User.id == user_id)
-        )
+        user: User = await db.scalar(select(User).where(User.id == user_id))
 
         if not user:
             raise HTTPException(
@@ -59,6 +45,8 @@ def get_current_user(*req_types: UserType):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Usuario nao autorizado para este recurso",
             )
+
+        await db.refresh(user, [user.type.value])
 
         return user
 
