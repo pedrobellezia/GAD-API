@@ -4,7 +4,7 @@ import enum
 import uuid
 from typing import Optional
 
-from sqlalchemy import String, Uuid, Enum as alchemyEnum, DateTime, func
+from sqlalchemy import String, Uuid, Enum as alchemyEnum, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
@@ -29,9 +29,7 @@ class User(Base):
     type: Mapped[UserType] = mapped_column(alchemyEnum(UserType), nullable=False)
     avatar: Mapped[str] = mapped_column(String(255), nullable=True)
     deleted_at: Mapped[DateTime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        index=True
+        DateTime(timezone=True), nullable=True, index=True
     )
 
     client: Mapped[Optional["Client"]] = relationship(

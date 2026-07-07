@@ -52,6 +52,7 @@ async def route_get_me(
         )
     return q
 
+
 @router.delete(
     path="",
     status_code=200,

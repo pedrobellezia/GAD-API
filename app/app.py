@@ -11,6 +11,7 @@ from app.exceptions import (
 )
 from app.router import agency_router, auth_router, me_router, media_router
 from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="Fenix API")
 
 app.include_router(agency_router, prefix="/agency", tags=["agency"])
