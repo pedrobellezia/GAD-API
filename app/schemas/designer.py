@@ -5,8 +5,7 @@ from pydantic import BaseModel, field_validator, ConfigDict
 from pydantic_core import PydanticCustomError
 
 from app.models import UserType
-from app.schemas import AgencyRead
-
+from app.schemas.agency import AgencyRead
 from app.schemas.user import UserCreate, UserRead
 
 

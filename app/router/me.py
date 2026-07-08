@@ -85,9 +85,7 @@ async def route_writer_link_agency(
         )
 
     token: InviteToken = await db.scalar(
-        select(InviteToken)
-        .where(InviteToken.token == payload.token)
-        .with_for_update()
+        select(InviteToken).where(InviteToken.token == payload.token).with_for_update()
     )
 
     if not token:
