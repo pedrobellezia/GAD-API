@@ -1,10 +1,8 @@
 from typing import Optional, Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator, EmailStr, Field, ConfigDict
-from pydantic_core import PydanticCustomError
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
-from app.models import UserType
 from app.schemas.user import UserCreate, UserRead
 from app.utils.types import CNPJ
 
@@ -13,15 +11,6 @@ class AgencyCreate(BaseModel):
     cnpj: CNPJ
     user: UserCreate
     kind: Literal["agency"]
-
-    @field_validator("user")
-    @classmethod
-    def validate_user_type(cls, user: UserCreate):
-        if user.type != UserType.agency:
-            raise PydanticCustomError(
-                "invalid_user_type", "tipo do usuario deve ser 'agency'"
-            )
-        return user
 
 
 class AgencyRead(BaseModel):

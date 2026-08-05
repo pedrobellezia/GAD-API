@@ -10,7 +10,6 @@ from app.models import UserType
 class UserCreate(BaseModel):
     name: NonEmptyStr
     email: EmailStr
-    type: UserType
     avatar: Optional[NonEmptyStr] = None
     pswd: NonEmptyStr
 

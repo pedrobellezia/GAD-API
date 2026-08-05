@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core import pswd_hasher
-from app.models import User, Client, Writer, Designer
+from app.models import User, Client, Writer, Designer, UserType
 from app.schemas import UserCreate, UserFilter
 
 
@@ -27,9 +27,10 @@ async def get_users(db: AsyncSession, filters: UserFilter) -> list[User]:
     return list(result.scalars().all())
 
 
-async def create_user(db: AsyncSession, user_data: UserCreate):
+async def create_user(db: AsyncSession, user_data: UserCreate, user_type: UserType):
     new_user = User(**user_data.model_dump(exclude={"pswd"}))
     new_user.pswd = pswd_hasher.hash(user_data.pswd)
+    new_user.type = user_type
     db.add(new_user)
 
     await db.refresh(new_user)
