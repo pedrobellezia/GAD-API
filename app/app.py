@@ -8,6 +8,8 @@ from app.exceptions import (
     request_validation_handler,
     response_validation_handler,
     integrity_error_handler,
+    custom_error_handler,
+    CustomAppError,
 )
 from app.router import agency_router, auth_router, me_router, media_router
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +24,7 @@ app.include_router(media_router, prefix="/media", tags=["media"])
 app.add_exception_handler(RequestValidationError, request_validation_handler)
 app.add_exception_handler(ResponseValidationError, response_validation_handler)
 app.add_exception_handler(IntegrityError, integrity_error_handler)
+app.add_exception_handler(CustomAppError, custom_error_handler)
 
 app.add_middleware(
     CORSMiddleware,

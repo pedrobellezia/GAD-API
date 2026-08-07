@@ -3,6 +3,7 @@ from .handlers import (
     integrity_error_handler,
     request_validation_handler,
     response_validation_handler,
+    custom_error_handler,
 )
 
 __all__ = [
@@ -11,4 +12,5 @@ __all__ = [
     "integrity_error_handler",
     "request_validation_handler",
     "response_validation_handler",
+    "custom_error_handler",
 ]
