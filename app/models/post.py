@@ -44,22 +44,18 @@ class Post(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
-    status: Mapped[PostStatus] = mapped_column(
-        SQLEnum(PostStatus, name="poststatus"),
-        default=PostStatus.draft,
-        nullable=False,
-    )
-
     version: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         default=1,
     )
 
-    update_counter: Mapped[int] = mapped_column(
-        Integer,
+    __mapper_args__ = {"version_id_col": version}
+
+    status: Mapped[PostStatus] = mapped_column(
+        SQLEnum(PostStatus, name="poststatus"),
+        default=PostStatus.draft,
         nullable=False,
-        default=1,
     )
 
     agency: Mapped["Agency"] = relationship(back_populates="posts")

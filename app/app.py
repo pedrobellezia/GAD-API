@@ -11,7 +11,7 @@ from app.exceptions import (
     custom_error_handler,
     CustomAppError,
 )
-from app.router import agency_router, auth_router, me_router, media_router
+from app.router import agency_router, auth_router, me_router, media_router, post_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Gad API")
@@ -20,6 +20,7 @@ app.include_router(agency_router, prefix="/agency", tags=["agency"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(me_router, prefix="/me", tags=["me"])
 app.include_router(media_router, prefix="/media", tags=["media"])
+app.include_router(post_router, prefix="/posts", tags=["posts"])
 
 app.add_exception_handler(RequestValidationError, request_validation_handler)
 app.add_exception_handler(ResponseValidationError, response_validation_handler)
