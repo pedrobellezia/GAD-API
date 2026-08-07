@@ -10,20 +10,7 @@ from app.services.invite_token import create_invite_tokens
 
 async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
     query = select(Agency).join(Agency.user).options(contains_eager(Agency.user))
-
-    if filters.id:
-        query = query.where(Agency.id == filters.id)
-
-    if filters.cnpj:
-        query = query.where(Agency.cnpj == filters.cnpj)
-
-    if filters.user_email:
-        query = query.where(User.email == filters.user_email)
-
-    if filters.user_name:
-        query = query.where(User.name.ilike(f"%{filters.user_name}%"))
-
-    query = query.offset(filters.skip).limit(filters.limit)
+    query = filters.apply_filters(query)
 
     result = await db.execute(query)
     return list(result.scalars().unique().all())

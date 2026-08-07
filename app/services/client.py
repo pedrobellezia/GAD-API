@@ -24,22 +24,7 @@ async def get_clients(db: AsyncSession, filters: ClientFilter) -> list[Client]:
         )
     )
 
-    if filters.id:
-        query = query.where(Client.id == filters.id)
-
-    if filters.user_name:
-        query = query.where(User.name.ilike(f"%{filters.user_name}%"))
-
-    if filters.user_email:
-        query = query.where(User.email == filters.user_email)
-
-    if filters.agency_cnpj:
-        query = query.where(Agency.cnpj == filters.agency_cnpj)
-
-    if filters.agency_name:
-        query = query.where(agency_user.name.ilike(f"%{filters.agency_name}%"))
-
-    query = query.offset(filters.skip).limit(filters.limit)
+    query = filters.apply_filters(query, agency_user=agency_user)
 
     result = await db.execute(query)
     return list(result.scalars().unique().all())
