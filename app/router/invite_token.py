@@ -15,7 +15,9 @@ from app.services import create_invite_tokens
 router = APIRouter()
 
 
-@router.get(path="", response_model=list[InviteTokenRead], status_code=200)
+@router.get(
+    path="", response_model=list[InviteTokenRead], status_code=status.HTTP_200_OK
+)
 async def route_agency_invite_tokens(
     user: User = Depends(get_current_user(UserType.agency)),
     db: AsyncSession = Depends(get_db),
@@ -26,7 +28,9 @@ async def route_agency_invite_tokens(
     return list(result.unique().all())
 
 
-@router.post(path="", response_model=DetailsResponse, status_code=201)
+@router.post(
+    path="", response_model=DetailsResponse, status_code=status.HTTP_201_CREATED
+)
 async def route_agency_create_invite_tokens(
     payload: InviteTokenBatchCreate,
     user: User = Depends(get_current_user(UserType.agency)),
@@ -37,7 +41,11 @@ async def route_agency_create_invite_tokens(
     return {"details": f"{payload.quantity} tokens de convite criados com sucesso"}
 
 
-@router.delete(path="/{token}", status_code=200, response_model=DetailsResponse)
+@router.delete(
+    path="/{token}",
+    status_code=status.HTTP_200_OK,
+    response_model=DetailsResponse,
+)
 async def route_agency_delete_invite_token(
     token: str,
     user: User = Depends(get_current_user(UserType.agency)),

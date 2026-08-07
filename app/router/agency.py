@@ -15,7 +15,9 @@ router = APIRouter()
 
 
 @router.delete(
-    path="/member/{user_id}/unlink", status_code=200, response_model=DetailsResponse
+    path="/member/{user_id}/unlink",
+    status_code=status.HTTP_200_OK,
+    response_model=DetailsResponse,
 )
 async def route_agency_client_unlink(
     user_id: UUID,

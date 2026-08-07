@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi import APIRouter, Form, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Form, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import LOCAL_STORAGE_PATH
@@ -14,7 +14,11 @@ from app.exceptions import CustomAppError
 router = APIRouter()
 
 
-@router.post(path="/upload", status_code=201, response_model=DetailsResponse)
+@router.post(
+    path="/upload",
+    status_code=status.HTTP_201_CREATED,
+    response_model=DetailsResponse,
+)
 async def route_upload_medias(
     files: list[UploadFile] = File(...),
     aliases: list[str] = Form(...),
@@ -23,7 +27,7 @@ async def route_upload_medias(
 ):
     if len(aliases) != len(files):
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="O número de aliases deve ser igual ao número de arquivos",
         )
 

@@ -30,7 +30,7 @@ router = APIRouter()
 
 @router.get(
     path="",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     response_model=ClientRead | WriterRead | AgencyRead | DesignerRead,
 )
 async def route_get_me(
@@ -55,7 +55,7 @@ async def route_get_me(
 
 @router.delete(
     path="",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     response_model=DetailsResponse,
 )
 async def route_delete_me(
@@ -67,7 +67,9 @@ async def route_delete_me(
     return {"details": "Usuário deletado com sucesso"}
 
 
-@router.post(path="/link", status_code=200, response_model=DetailsResponse)
+@router.post(
+    path="/link", status_code=status.HTTP_200_OK, response_model=DetailsResponse
+)
 async def route_writer_link_agency(
     payload: InviteTokenPayload,
     user: User = Depends(
@@ -101,7 +103,9 @@ async def route_writer_link_agency(
     return {"details": "Usuário vinculado a agencia com sucesso"}
 
 
-@router.delete(path="/unlink", status_code=200, response_model=DetailsResponse)
+@router.delete(
+    path="/unlink", status_code=status.HTTP_200_OK, response_model=DetailsResponse
+)
 async def route_writer_unlink_agency(
     user: User = Depends(
         get_current_user(UserType.writer, UserType.client, UserType.designer)
@@ -120,7 +124,7 @@ async def route_writer_unlink_agency(
     return {"details": "Usuário desvinculado da agencia com sucesso"}
 
 
-@router.get(path="/agency", response_model=AgencyRead, status_code=200)
+@router.get(path="/agency", response_model=AgencyRead, status_code=status.HTTP_200_OK)
 async def route_writer_agency(
     user: User = Depends(
         get_current_user(UserType.writer, UserType.client, UserType.designer)
@@ -149,7 +153,7 @@ async def route_writer_agency(
     return agency
 
 
-@router.get("/clients", response_model=list[ClientRead], status_code=200)
+@router.get("/clients", response_model=list[ClientRead], status_code=status.HTTP_200_OK)
 async def route_get_clients(
     user: User = Depends(
         get_current_user(UserType.writer, UserType.agency, UserType.designer)
@@ -168,7 +172,7 @@ async def route_get_clients(
     )
 
 
-@router.get("/writers", response_model=list[WriterRead], status_code=200)
+@router.get("/writers", response_model=list[WriterRead], status_code=status.HTTP_200_OK)
 async def route_get_writers(
     user: User = Depends(
         get_current_user(UserType.client, UserType.agency, UserType.designer)
@@ -187,7 +191,9 @@ async def route_get_writers(
     )
 
 
-@router.get("/designers", response_model=list[DesignerRead], status_code=200)
+@router.get(
+    "/designers", response_model=list[DesignerRead], status_code=status.HTTP_200_OK
+)
 async def route_get_designers(
     user: User = Depends(
         get_current_user(UserType.client, UserType.agency, UserType.writer)
