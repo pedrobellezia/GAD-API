@@ -223,3 +223,6 @@ segredinho*
 
 alembic/versions/*
 storage/*
+
+.clinerules
+docs/*
