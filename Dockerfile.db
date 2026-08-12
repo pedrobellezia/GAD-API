@@ -4,3 +4,5 @@ RUN apt-get update
 RUN apt-get -y install postgresql-16-cron
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
+
+COPY ./scripts/init /docker-entrypoint-initdb.d/
