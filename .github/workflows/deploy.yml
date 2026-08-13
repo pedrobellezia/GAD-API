@@ -52,3 +52,4 @@ jobs:
             cd ~/gad-teste
             docker compose pull
             docker compose up -d
+            docker compose exec -T api alembic upgrade head
