@@ -1,5 +1,5 @@
 CREATE ROLE dml_role;
-GRANT CONNECT ON DATABASE app_db TO dml_role;
+GRANT CONNECT ON DATABASE mekanism TO dml_role;
 
 GRANT USAGE ON SCHEMA public TO dml_role;
 
