@@ -35,7 +35,7 @@ async def create_client(db: AsyncSession, client_data: ClientCreate) -> None:
     new_user.pswd = pswd_hasher.hash(client_data.user.pswd)
     new_user.type = UserType.client
     db.add(new_user)
-
+    await db.flush()
     new_client = Client(id=new_user.id, agency_id=client_data.agency_id)
     db.add(new_client)
 

@@ -25,5 +25,6 @@ async def create_designer(db: AsyncSession, designer_data: DesignerCreate) -> No
     new_user.pswd = pswd_hasher.hash(designer_data.user.pswd)
     new_user.type = UserType.designer
     db.add(new_user)
+    await db.flush()
     new_designer = Designer(id=new_user.id, agency_id=designer_data.agency_id)
     db.add(new_designer)

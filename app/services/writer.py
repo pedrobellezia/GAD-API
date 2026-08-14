@@ -35,6 +35,7 @@ async def create_writer(db: AsyncSession, writer_data: WriterCreate) -> None:
     new_user.pswd = pswd_hasher.hash(writer_data.user.pswd)
     new_user.type = UserType.writer
     db.add(new_user)
+    await db.flush()
 
     new_writer = Writer(id=new_user.id, agency_id=writer_data.agency_id)
     db.add(new_writer)
