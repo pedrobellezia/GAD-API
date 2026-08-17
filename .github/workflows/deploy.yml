@@ -49,7 +49,7 @@ jobs:
           timeout: 60s
           command_timeout: 10m
           script: |
-            cd ~/gad-teste
+            cd ~/gad-api
             docker compose pull
             docker compose up -d
             docker compose exec -T api uv run alembic upgrade head
