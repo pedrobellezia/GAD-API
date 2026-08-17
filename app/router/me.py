@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models import User
+from app.models import User, UserType
 from app.schemas import (
     DetailsResponse,
     AgencyRead,
@@ -29,19 +29,20 @@ async def route_get_me(
     user: User = Depends(get_current_user()),
     db: AsyncSession = Depends(get_db),
 ):
-    if user.agency:
-        q = await get_agency_me(db=db, user_id=user.id)
-    elif user.client:
-        q = await get_client_me(db=db, user_id=user.id)
-    elif user.writer:
-        q = await get_writer_me(db=db, user_id=user.id)
-    elif user.designer:
-        q = await get_designer_me(db=db, user_id=user.id)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tipo de usuário inválido",
-        )
+    match user.type:
+        case UserType.agency:
+            q = await get_agency_me(db=db, user_id=user.id)
+        case UserType.client:
+            q = await get_client_me(db=db, user_id=user.id)
+        case UserType.writer:
+            q = await get_writer_me(db=db, user_id=user.id)
+        case UserType.designer:
+            q = await get_designer_me(db=db, user_id=user.id)
+        case _:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tipo de usuário inválido",
+            )
     return q
 
 
