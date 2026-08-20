@@ -27,7 +27,6 @@ async def create_agency(db: AsyncSession, agency_data: AgencyCreate) -> None:
     new_agency = Agency(id=new_user.id, cnpj=agency_data.cnpj)
     db.add(new_agency)
     await db.flush()
-    await create_invite_tokens(db, agency_id=new_agency.id, quantity=10)
 
 
 async def get_agency_me(db: AsyncSession, user_id) -> Agency:
