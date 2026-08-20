@@ -54,6 +54,7 @@ async def route_upload_medias(
                         mime_type=file_info.mime_type,
                         size_bytes=size_bytes,
                         designer_id=user.id,
+                        agency_id=user.designer.agency_id,
                     )
                 )
             except CustomAppError as exc:
