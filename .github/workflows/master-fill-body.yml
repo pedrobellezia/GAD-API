@@ -17,11 +17,20 @@ jobs:
       REPO: ${{ github.repository }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
-      - name: Extrair issues dos commits do PR
+      - name: Extrair issues dos PRs originais dos commits
         id: issues
         run: |
-          numbers=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json commits \
-            --jq '.commits[] | (.messageHeadline + " " + .messageBody)' \
+          shas=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json commits --jq '.commits[].oid')
+
+          bodies=""
+          for sha in $shas; do
+            pr_bodies=$(gh api "repos/$REPO/commits/$sha/pulls" \
+              --jq --arg current "$PR_NUMBER" '.[] | select((.number | tostring) != $current) | .body // ""')
+            bodies="${bodies}
+          ${pr_bodies}"
+          done
+
+          numbers=$(echo "$bodies" \
             | grep -oiE '(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)[[:space:]]+#[0-9]+' \
             | grep -oE '[0-9]+' | sort -un)
           {
