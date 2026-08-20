@@ -1,0 +1,37 @@
+name: Mover issue para In Review
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop]
+
+jobs:
+  move-to-in-review:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+      PROJECT_OWNER: pedrobellezia
+      PROJECT_NUMBER: "10"
+      REPO: ${{ github.repository }}
+      BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extrair issues referenciadas no PR
+        id: issues
+        run: |
+          numbers=$(echo "$BODY" | grep -oiE '(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)[[:space:]]+#[0-9]+' \
+            | grep -oE '[0-9]+' | sort -u)
+          {
+            echo "numbers<<EOF"
+            echo "$numbers"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Mover issues para In Review
+        if: steps.issues.outputs.numbers != ''
+        run: |
+          for n in ${{ steps.issues.outputs.numbers }}; do
+            ./scripts/gh-project-move.sh "$n" "In Review"
+          done
