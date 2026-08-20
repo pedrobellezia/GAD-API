@@ -25,7 +25,7 @@ jobs:
           bodies=""
           for sha in $shas; do
             pr_bodies=$(gh api "repos/$REPO/commits/$sha/pulls" \
-              --jq --arg current "$PR_NUMBER" '.[] | select((.number | tostring) != $current) | .body // ""')
+              --jq ".[] | select((.number | tostring) != \"$PR_NUMBER\") | .body // \"\"")
             bodies="${bodies}
           ${pr_bodies}"
           done
