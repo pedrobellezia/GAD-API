@@ -38,10 +38,16 @@ async def login(db: AsyncSession, payload: LoginPayload) -> str:
         )
 
     if result.deleted_at is not None:
-        await db.execute(
-            text("SELECT restore_user(:email)"),
-            {"email": payload.email},
-        )
+        if payload.restore:
+            await db.execute(
+                text("SELECT restore_user(:email)"),
+                {"email": payload.email},
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Conta desativada. Envie restore=true para confirmar a reativação.",
+            )
 
     token = create_token(user_id=result.id)
 
