@@ -44,7 +44,7 @@ jobs:
         run: |
           block=$'<!-- issues:start -->\n'
           for n in ${{ steps.issues.outputs.list }}; do
-            block+="Resolves #$n"$'\n'
+            block+="Closes #$n"$'\n'
           done
           block+='<!-- issues:end -->'
 
