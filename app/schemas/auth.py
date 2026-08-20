@@ -13,6 +13,7 @@ from app.utils.types import NonEmptyStr
 class LoginPayload(BaseModel):
     email: EmailStr
     pswd: NonEmptyStr
+    restore: bool = False
 
 
 class LoginResponse(BaseModel):
