@@ -3,7 +3,7 @@ name: Mover issue para In Review
 on:
   pull_request:
     types: [closed]
-    branches: [develop]
+    branches: [master]
 
 jobs:
   move-to-in-review:
@@ -21,7 +21,7 @@ jobs:
       - name: Extrair issues referenciadas no PR
         id: issues
         run: |
-          numbers=$(echo "$BODY" | grep -oiE '(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)[[:space:]]+#[0-9]+' \
+          numbers=$(echo "$BODY" | grep -oiE 'issue[[:space:]]+#[0-9]+' \
             | grep -oE '[0-9]+' | sort -u)
           {
             echo "numbers<<EOF"

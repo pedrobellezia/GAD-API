@@ -1,12 +1,12 @@
 name: Deploy API to EC2
 
 on:
-  push:
-    branches:
-      - develop
+  release:
+    types: [published]
 
 jobs:
   build-and-push:
+    if: github.event.release.prerelease == false
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,7 +29,9 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/pedrobellezia/gad-api:latest
+          tags: |
+            ghcr.io/pedrobellezia/gad-api:latest
+            ghcr.io/pedrobellezia/gad-api:${{ github.event.release.tag_name }}
 
       - name: Build and push DB Docker image
         uses: docker/build-push-action@v6
@@ -37,7 +39,9 @@ jobs:
           context: .
           file: ./Dockerfile.db
           push: true
-          tags: ghcr.io/pedrobellezia/gad-db:latest
+          tags: |
+            ghcr.io/pedrobellezia/gad-db:latest
+            ghcr.io/pedrobellezia/gad-db:${{ github.event.release.tag_name }}
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
