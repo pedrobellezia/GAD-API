@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models import User, UserType
+from app.models import User, UserType, Client, Writer, Designer
 from app.schemas import (
     DetailsResponse,
     InviteTokenPayload,
@@ -26,6 +26,18 @@ from app.services.agency import (
 router = APIRouter()
 
 
+def _get_linked_member(user: User) -> Writer | Client | Designer | None:
+    match user.type:
+        case UserType.writer:
+            return user.writer
+        case UserType.client:
+            return user.client
+        case UserType.designer:
+            return user.designer
+        case _:
+            return None
+
+
 @router.post(
     path="/link",
     status_code=status.HTTP_200_OK,
@@ -38,7 +50,7 @@ async def route_link_agency(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    member = user.writer or user.client or user.designer
+    member = _get_linked_member(user)
     await link_member_by_token(db=db, member=member, token_str=payload.token)
     return {"details": "Usuário vinculado a agencia com sucesso"}
 
@@ -54,7 +66,7 @@ async def route_unlink_agency_self(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    member = user.writer or user.client or user.designer
+    member = _get_linked_member(user)
     await unlink_member_self(db=db, member=member)
     return {"details": "Usuário desvinculado da agencia com sucesso"}
 
@@ -70,7 +82,7 @@ async def route_get_my_agency(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    member = user.writer or user.client or user.designer
+    member = _get_linked_member(user)
     return await get_member_agency(db=db, member=member)
 
 
@@ -99,11 +111,11 @@ async def route_get_clients(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    if user.writer:
+    if user.type == UserType.writer:
         return await get_my_clients(db=db, agency_id=user.writer.agency_id)
-    elif user.designer:
+    elif user.type == UserType.designer:
         return await get_my_clients(db=db, agency_id=user.designer.agency_id)
-    elif user.agency:
+    elif user.type == UserType.agency:
         return await get_my_clients(db=db, agency_id=user.id)
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -122,11 +134,11 @@ async def route_get_writers(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    if user.client:
+    if user.type == UserType.client:
         return await get_my_writers(db=db, agency_id=user.client.agency_id)
-    elif user.designer:
+    elif user.type == UserType.designer:
         return await get_my_writers(db=db, agency_id=user.designer.agency_id)
-    elif user.agency:
+    elif user.type == UserType.agency:
         return await get_my_writers(db=db, agency_id=user.id)
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -145,11 +157,11 @@ async def route_get_designers(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    if user.client:
+    if user.type == UserType.client:
         return await get_my_designers(db=db, agency_id=user.client.agency_id)
-    elif user.writer:
+    elif user.type == UserType.writer:
         return await get_my_designers(db=db, agency_id=user.writer.agency_id)
-    elif user.agency:
+    elif user.type == UserType.agency:
         return await get_my_designers(db=db, agency_id=user.id)
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,

@@ -41,7 +41,7 @@ async def get_my_clients(db: AsyncSession, agency_id) -> list[Client]:
         return []
     result = await db.execute(
         select(Client)
-        .options(selectinload(Client.user))
+        .options(selectinload(Client.user), selectinload(Client.agency).selectinload(Agency.user))
         .where(Client.agency_id == agency_id)
     )
     return list(result.scalars().all())
@@ -52,7 +52,7 @@ async def get_my_writers(db: AsyncSession, agency_id) -> list[Writer]:
         return []
     result = await db.execute(
         select(Writer)
-        .options(selectinload(Writer.user))
+        .options(selectinload(Writer.user), selectinload(Writer.agency).selectinload(Agency.user))
         .where(Writer.agency_id == agency_id)
     )
     return list(result.scalars().all())
@@ -63,7 +63,7 @@ async def get_my_designers(db: AsyncSession, agency_id) -> list[Designer]:
         return []
     result = await db.execute(
         select(Designer)
-        .options(selectinload(Designer.user))
+        .options(selectinload(Designer.user), selectinload(Designer.agency).selectinload(Agency.user))
         .where(Designer.agency_id == agency_id)
     )
     return list(result.scalars().all())
