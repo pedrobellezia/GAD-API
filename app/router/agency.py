@@ -15,13 +15,13 @@ from app.schemas import (
 )
 from app.services.agency import (
     link_member_by_token,
-    unlink_member_self,
+    unlink_member,
     get_member_agency,
-    unlink_member_by_agency,
     get_my_clients,
     get_my_writers,
     get_my_designers,
 )
+from app.services.user import get_profile
 
 router = APIRouter()
 
@@ -67,7 +67,7 @@ async def route_unlink_agency_self(
     db: AsyncSession = Depends(get_db),
 ):
     member = _get_linked_member(user)
-    await unlink_member_self(db=db, member=member)
+    await unlink_member(db=db, member=member)
     return {"details": "Usuário desvinculado da agencia com sucesso"}
 
 
@@ -96,7 +96,12 @@ async def route_agency_member_unlink(
     user: User = Depends(get_current_user(UserType.agency)),
     db: AsyncSession = Depends(get_db),
 ):
-    await unlink_member_by_agency(db=db, agency_user_id=user.id, member_id=user_id)
+    member = await get_profile(db=db, user_id=user_id)
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario nao encontrado"
+        )
+    await unlink_member(db=db, member=member, requesting_agency_id=user.id)
     return {"details": "Usuario desvinculado com sucesso"}
 
 

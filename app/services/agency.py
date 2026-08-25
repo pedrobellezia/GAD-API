@@ -7,7 +7,6 @@ from app.core import pswd_hasher
 from app.models import Agency, User, UserType, Client, Writer, Designer, InviteToken
 from app.schemas import AgencyCreate, AgencyFilter
 from app.services.invite_token import create_invite_tokens
-from app.services.user import get_profile
 
 
 async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
@@ -91,11 +90,29 @@ async def link_member_by_token(db: AsyncSession, member, token_str: str) -> None
     await db.commit()
 
 
-async def unlink_member_self(db: AsyncSession, member) -> None:
+async def unlink_member(
+    db: AsyncSession,
+    member: Client | Writer | Designer,
+    *,
+    requesting_agency_id=None,
+) -> None:
+    is_self_unlink = requesting_agency_id is None
+
     if not member.agency_id:
+        if is_self_unlink:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não possui agencia",
+            )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário nao possui agencia",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Usuario nao esta vinculado a nenhuma agencia",
+        )
+
+    if not is_self_unlink and member.agency_id != requesting_agency_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario não esta vinculado a sua agencia",
         )
 
     member.agency_id = None
@@ -122,23 +139,3 @@ async def get_member_agency(db: AsyncSession, member) -> Agency:
         )
 
     return agency
-
-
-async def unlink_member_by_agency(db: AsyncSession, agency_user_id, member_id) -> None:
-    profile = await get_profile(db=db, user_id=member_id)
-    if not profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario nao encontrado"
-        )
-    if not profile.agency_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Usuario nao esta vinculado a nenhuma agencia",
-        )
-    if profile.agency_id != agency_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario nao esta vinculado a sua agencia",
-        )
-    profile.agency_id = None
-    await db.commit()
