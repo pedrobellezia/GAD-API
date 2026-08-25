@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import LOCAL_STORAGE_PATH
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
-from app.models import Media, User, UserType
+from app.core.dependencies import get_current_profile
+from app.models import Media, UserType, Designer
 from app.schemas import DetailsResponse
 from app.services.media import validate_media_file, store_media_file
 from app.exceptions import CustomAppError
@@ -23,7 +23,7 @@ async def route_upload_medias(
     files: list[UploadFile] = File(...),
     aliases: list[str] = Form(...),
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user(UserType.designer)),
+    member: Designer = Depends(get_current_profile(UserType.designer)),
 ):
     if len(aliases) != len(files):
         raise HTTPException(
@@ -53,8 +53,8 @@ async def route_upload_medias(
                         media_type=file_info.media_type,
                         mime_type=file_info.mime_type,
                         size_bytes=size_bytes,
-                        designer_id=user.id,
-                        agency_id=user.designer.agency_id,
+                        designer_id=member.id,
+                        agency_id=member.agency_id,
                     )
                 )
             except CustomAppError as exc:
