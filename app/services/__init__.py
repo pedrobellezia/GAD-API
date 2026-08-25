@@ -9,7 +9,7 @@ from .auth import login, register
 from .client import create_client, get_clients
 from .invite_token import create_invite_tokens
 from .designer import create_designer, get_designer_me
-from .user import create_user, get_users, get_profile
+from .user import create_user, get_users, get_profile, resolve_profile, load_user
 from .writer import create_writer, get_writers
 from .post import (
     get_posts,
@@ -52,4 +52,6 @@ __all__ = [
     "remove_media_from_post",
     "get_medias_by_post",
     "update_media_position",
+    "load_user",
+    "resolve_profile"
 ]
