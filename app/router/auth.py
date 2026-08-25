@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.schemas import LoginPayload, RegisterPayload, DetailsResponse, LoginResponse
+from app.schemas import DetailsResponse, LoginPayload, LoginResponse, RegisterPayload
 from app.services import login, register
 
 router = APIRouter()

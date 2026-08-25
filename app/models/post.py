@@ -1,22 +1,24 @@
 from __future__ import annotations
 
 import uuid
-from enum import Enum
+from enum import StrEnum
 
 from sqlalchemy import (
     Enum as SQLEnum,
+)
+from sqlalchemy import (
     ForeignKey,
+    Integer,
     String,
     Text,
     Uuid,
-    Integer,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
 
 
-class PostStatus(str, Enum):
+class PostStatus(StrEnum):
     draft = "draft"
     review = "review"
     approved = "approved"
@@ -58,11 +60,11 @@ class Post(Base):
         nullable=False,
     )
 
-    agency: Mapped["Agency"] = relationship(back_populates="posts")
-    client: Mapped["Client"] = relationship(back_populates="posts")
-    writer: Mapped["Writer"] = relationship(back_populates="posts")
+    agency: Mapped[Agency] = relationship(back_populates="posts")
+    client: Mapped[Client] = relationship(back_populates="posts")
+    writer: Mapped[Writer] = relationship(back_populates="posts")
 
-    medias: Mapped[list["PostMedia"]] = relationship(
+    medias: Mapped[list[PostMedia]] = relationship(
         "PostMedia",
         back_populates="post",
         cascade="all, delete-orphan",

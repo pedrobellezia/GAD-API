@@ -1,4 +1,4 @@
-from typing import Optional, Literal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -8,7 +8,7 @@ from app.schemas.user import UserCreate, UserRead
 
 
 class DesignerCreate(BaseModel):
-    agency_id: Optional[UUID] = None
+    agency_id: UUID | None = None
     kind: Literal["designer"]
     user: UserCreate
 

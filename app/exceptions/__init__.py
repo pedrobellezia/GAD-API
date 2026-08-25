@@ -1,9 +1,9 @@
 from .errors import CustomAppError, CustomErrorType
 from .handlers import (
+    custom_error_handler,
     integrity_error_handler,
     request_validation_handler,
     response_validation_handler,
-    custom_error_handler,
 )
 
 __all__ = [

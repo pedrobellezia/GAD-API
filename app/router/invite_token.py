@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.dependencies import get_current_user
 
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models import InviteToken, User, UserType
 from app.schemas import (
+    DetailsResponse,
     InviteTokenBatchCreate,
     InviteTokenRead,
-    DetailsResponse,
 )
 from app.services import create_invite_tokens
 

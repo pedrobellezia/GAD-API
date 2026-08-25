@@ -1,6 +1,8 @@
-from pydantic import AfterValidator
-from app.utils import non_empty, validate_cnpj
 from typing import Annotated
+
+from pydantic import AfterValidator
+
+from app.utils import non_empty, validate_cnpj
 
 NonEmptyStr = Annotated[str, AfterValidator(non_empty)]
 

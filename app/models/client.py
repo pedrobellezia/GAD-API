@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import uuid
-from sqlalchemy import Uuid, ForeignKey
+
+from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
@@ -17,6 +18,6 @@ class Client(Base):
         Uuid, ForeignKey("agencies.id", ondelete="SET NULL"), nullable=True
     )
 
-    user: Mapped["User"] = relationship(back_populates="client")
-    agency: Mapped["Agency"] = relationship(back_populates="clients")
-    posts: Mapped[list["Post"]] = relationship(back_populates="client")
+    user: Mapped[User] = relationship(back_populates="client")
+    agency: Mapped[Agency] = relationship(back_populates="clients")
+    posts: Mapped[list[Post]] = relationship(back_populates="client")

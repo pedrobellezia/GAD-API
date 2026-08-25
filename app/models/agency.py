@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import uuid
-from typing import List
 
-from sqlalchemy import String, Uuid, ForeignKey
+from sqlalchemy import ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
@@ -17,13 +16,13 @@ class Agency(Base):
     )
     cnpj: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
 
-    user: Mapped["User"] = relationship(back_populates="agency")
+    user: Mapped[User] = relationship(back_populates="agency")
 
-    clients: Mapped[List["Client"]] = relationship(back_populates="agency")
-    writers: Mapped[List["Writer"]] = relationship(back_populates="agency")
-    designers: Mapped[List["Designer"]] = relationship(back_populates="agency")
-    invite_tokens: Mapped[List["InviteToken"]] = relationship(
+    clients: Mapped[list[Client]] = relationship(back_populates="agency")
+    writers: Mapped[list[Writer]] = relationship(back_populates="agency")
+    designers: Mapped[list[Designer]] = relationship(back_populates="agency")
+    invite_tokens: Mapped[list[InviteToken]] = relationship(
         back_populates="agency", cascade="all, delete-orphan"
     )
-    posts: Mapped[List["Post"]] = relationship(back_populates="agency")
-    medias: Mapped[List["Media"]] = relationship(back_populates="agency")
+    posts: Mapped[list[Post]] = relationship(back_populates="agency")
+    medias: Mapped[list[Media]] = relationship(back_populates="agency")

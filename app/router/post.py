@@ -7,11 +7,11 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models import User, UserType
 from app.schemas import (
-    PostCreate,
-    PostUpdate,
-    PostRead,
-    PostFilter,
     DetailsResponse,
+    PostCreate,
+    PostFilter,
+    PostRead,
+    PostUpdate,
 )
 from app.services import post as post_service
 

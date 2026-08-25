@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import Post, PostMedia, Media, Client, User, UserType
-from app.schemas import PostCreate, PostUpdate, PostFilter
+from app.models import Client, Media, Post, PostMedia, User, UserType
+from app.schemas import PostCreate, PostFilter, PostUpdate
 
 
 async def get_posts(

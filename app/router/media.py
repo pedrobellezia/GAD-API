@@ -1,15 +1,15 @@
 import asyncio
 
-from fastapi import APIRouter, Form, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import LOCAL_STORAGE_PATH
 from app.core.database import get_db
 from app.core.dependencies import get_current_profile
-from app.models import Media, UserType, Designer
-from app.schemas import DetailsResponse
-from app.services.media import validate_media_file, store_media_file
 from app.exceptions import CustomAppError
+from app.models import Designer, Media, UserType
+from app.schemas import DetailsResponse
+from app.services.media import store_media_file, validate_media_file
 
 router = APIRouter()
 
@@ -36,7 +36,7 @@ async def route_upload_medias(
     file_errors: list[dict] = []
 
     try:
-        for alias, file in zip(aliases, files):
+        for alias, file in zip(aliases, files, strict=True):
             try:
                 file_info = await validate_media_file(file)
 

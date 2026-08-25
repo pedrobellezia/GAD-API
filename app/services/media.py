@@ -6,16 +6,15 @@ import aiofiles
 from fastapi import UploadFile
 from pydantic import BaseModel
 
-from app.exceptions import CustomErrorType
-from app.models import MediaType
 from app.core import (
-    MAX_FILE_BYTES,
     ALLOWED_FILE_TYPES,
     CHUNKS_PER_READ,
-    mime_detector,
     LOCAL_STORAGE_PATH,
+    MAX_FILE_BYTES,
+    mime_detector,
 )
-from app.exceptions import CustomAppError
+from app.exceptions import CustomAppError, CustomErrorType
+from app.models import MediaType
 
 
 class MediaFileInfo(BaseModel):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import String, Uuid, ForeignKey
+from sqlalchemy import ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
@@ -17,4 +17,4 @@ class InviteToken(Base):
         Uuid, ForeignKey("agencies.id", ondelete="CASCADE"), nullable=False
     )
 
-    agency: Mapped["Agency"] = relationship(back_populates="invite_tokens")
+    agency: Mapped[Agency] = relationship(back_populates="invite_tokens")

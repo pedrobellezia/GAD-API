@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import uuid
-from enum import Enum
+from enum import StrEnum
 
-from sqlalchemy import Enum as SQLEnum, String, Uuid, ForeignKey, BigInteger
+from sqlalchemy import BigInteger, ForeignKey, String, Uuid
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
 
 
-class MediaType(str, Enum):
+class MediaType(StrEnum):
     video = "video"
     image = "image"
 
@@ -40,9 +41,9 @@ class Media(Base):
 
     size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
-    post_medias: Mapped[list["PostMedia"]] = relationship(
+    post_medias: Mapped[list[PostMedia]] = relationship(
         "PostMedia", back_populates="media"
     )
 
-    designer: Mapped["Designer"] = relationship("Designer", back_populates="medias")
-    agency: Mapped["Agency"] = relationship("Agency", back_populates="medias")
+    designer: Mapped[Designer] = relationship("Designer", back_populates="medias")
+    agency: Mapped[Agency] = relationship("Agency", back_populates="medias")
