@@ -12,7 +12,8 @@ from app.schemas import (
     WriterRead,
     DesignerRead,
 )
-from app.services.agency import get_agency_me
+from app.services import get_my_clients, get_my_designers, get_my_writers, resolve_profile
+from app.services.agency import get_agency_me, unlink_member
 from app.services.client import get_client_me
 from app.services.writer import get_writer_me
 from app.services.designer import get_designer_me
@@ -55,6 +56,18 @@ async def route_delete_me(
     user: User = Depends(get_current_user()),
     db: AsyncSession = Depends(get_db),
 ):
+    if user.type == UserType.agency:
+        users_list = [
+            *(await get_my_writers(db, user.id)),
+            *(await get_my_designers(db, user.id)),
+            *(await get_my_clients(db, user.id))
+        ]
+        for i in users_list:
+            await unlink_member(db, i, requesting_agency_id=user.id)
+    else:
+        member = await resolve_profile(user)
+        if member.agency_id:
+            await unlink_member(db, member)
     user.deleted_at = datetime.now(timezone.utc)
     await db.commit()
     return {"details": "Usuário deletado com sucesso"}
