@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_profile, get_current_user
 from app.models import User, UserType, Client, Writer, Designer
 from app.schemas import (
     DetailsResponse,
@@ -13,6 +13,7 @@ from app.schemas import (
     WriterRead,
     DesignerRead,
 )
+from app.services import resolve_profile
 from app.services.agency import (
     link_member_by_token,
     unlink_member,
@@ -26,18 +27,6 @@ from app.services.user import get_profile
 router = APIRouter()
 
 
-def _get_linked_member(user: User) -> Writer | Client | Designer | None:
-    match user.type:
-        case UserType.writer:
-            return user.writer
-        case UserType.client:
-            return user.client
-        case UserType.designer:
-            return user.designer
-        case _:
-            return None
-
-
 @router.post(
     path="/link",
     status_code=status.HTTP_200_OK,
@@ -45,12 +34,11 @@ def _get_linked_member(user: User) -> Writer | Client | Designer | None:
 )
 async def route_link_agency(
     payload: InviteTokenPayload,
-    user: User = Depends(
-        get_current_user(UserType.writer, UserType.client, UserType.designer)
+    member: Writer | Client | Designer = Depends(
+        get_current_profile(UserType.writer, UserType.client, UserType.designer)
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    member = _get_linked_member(user)
     await link_member_by_token(db=db, member=member, token_str=payload.token)
     return {"details": "Usuário vinculado a agencia com sucesso"}
 
@@ -61,12 +49,11 @@ async def route_link_agency(
     response_model=DetailsResponse,
 )
 async def route_unlink_agency_self(
-    user: User = Depends(
-        get_current_user(UserType.writer, UserType.client, UserType.designer)
+    member: Writer | Client | Designer = Depends(
+        get_current_profile(UserType.writer, UserType.client, UserType.designer)
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    member = _get_linked_member(user)
     await unlink_member(db=db, member=member)
     return {"details": "Usuário desvinculado da agencia com sucesso"}
 
@@ -77,12 +64,11 @@ async def route_unlink_agency_self(
     status_code=status.HTTP_200_OK,
 )
 async def route_get_my_agency(
-    user: User = Depends(
-        get_current_user(UserType.writer, UserType.client, UserType.designer)
+    member: Writer | Client | Designer = Depends(
+        get_current_profile(UserType.writer, UserType.client, UserType.designer)
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    member = _get_linked_member(user)
     return await get_member_agency(db=db, member=member)
 
 
@@ -116,17 +102,10 @@ async def route_get_clients(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    if user.type == UserType.writer:
-        return await get_my_clients(db=db, agency_id=user.writer.agency_id)
-    elif user.type == UserType.designer:
-        return await get_my_clients(db=db, agency_id=user.designer.agency_id)
-    elif user.type == UserType.agency:
+    if user.type == UserType.agency:
         return await get_my_clients(db=db, agency_id=user.id)
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Tipo de usuário inválido",
-    )
-
+    member = await resolve_profile(user)
+    return await get_my_clients(db=db, agency_id=member.agency_id)
 
 @router.get(
     path="/writers",
@@ -139,16 +118,10 @@ async def route_get_writers(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    if user.type == UserType.client:
-        return await get_my_writers(db=db, agency_id=user.client.agency_id)
-    elif user.type == UserType.designer:
-        return await get_my_writers(db=db, agency_id=user.designer.agency_id)
-    elif user.type == UserType.agency:
+    if user.type == UserType.agency:
         return await get_my_writers(db=db, agency_id=user.id)
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Tipo de usuário inválido",
-    )
+    member = await resolve_profile(user)
+    return await get_my_writers(db=db, agency_id=member.agency_id)
 
 
 @router.get(
@@ -162,13 +135,7 @@ async def route_get_designers(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    if user.type == UserType.client:
-        return await get_my_designers(db=db, agency_id=user.client.agency_id)
-    elif user.type == UserType.writer:
-        return await get_my_designers(db=db, agency_id=user.writer.agency_id)
-    elif user.type == UserType.agency:
+    if user.type == UserType.agency:
         return await get_my_designers(db=db, agency_id=user.id)
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Tipo de usuário inválido",
-    )
+    member = await resolve_profile(user)
+    return await get_my_designers(db=db, agency_id=member.agency_id)
