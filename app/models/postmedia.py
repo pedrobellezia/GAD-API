@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import ForeignKey, Uuid, Integer, CheckConstraint, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, Integer, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
@@ -29,8 +29,8 @@ class PostMedia(Base):
 
     position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    post: Mapped["Post"] = relationship(
+    post: Mapped[Post] = relationship(
         "Post",
         back_populates="medias",
     )
-    media: Mapped["Media"] = relationship("Media", back_populates="post_medias")
+    media: Mapped[Media] = relationship("Media", back_populates="post_medias")

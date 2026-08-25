@@ -4,9 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import bearer_scheme, decode_token
-from app.models import Client, Designer, User, UserType, Writer, Agency
+from app.models import Agency, Client, Designer, User, UserType, Writer
 from app.schemas import JwtPayload
-from app.services import resolve_profile, load_user
+from app.services import load_user, resolve_profile
 
 
 async def get_jwt_payload(
@@ -61,4 +61,5 @@ def get_current_profile(*req_types: UserType):
                 detail="Perfil de usuario nao encontrado",
             )
         return member
+
     return dependency

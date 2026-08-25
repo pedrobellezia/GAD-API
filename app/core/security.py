@@ -1,13 +1,13 @@
 import secrets
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader, HTTPBearer
+from magic import Magic
 from pwdlib import PasswordHash
 from pydantic import ValidationError
-from magic import Magic
 
 from app.core import (
     API_KEY_ENV_NAME,
@@ -40,7 +40,7 @@ def get_api_key(api_key: str | None = Depends(api_key_header)) -> str:
 def create_token(user_id: UUID) -> str:
     payload = {
         "sub": str(user_id),
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRES_MINUTES),
+        "exp": datetime.now(UTC) + timedelta(minutes=JWT_EXPIRES_MINUTES),
     }
 
     token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
@@ -52,8 +52,8 @@ def decode_token(token: str) -> JwtPayload:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         return JwtPayload.model_validate(payload)
 
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(401, "Token JWT expirado")
+    except jwt.ExpiredSignatureError as err:
+        raise HTTPException(401, "Token JWT expirado") from err
 
-    except (jwt.InvalidTokenError, ValidationError):
-        raise HTTPException(401, "Token JWT inválido")
+    except (jwt.InvalidTokenError, ValidationError) as err:
+        raise HTTPException(401, "Token JWT inválido") from err

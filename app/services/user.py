@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import pswd_hasher
-from app.models import User, Client, Writer, Designer, Agency, UserType
+from app.models import Agency, Client, Designer, User, UserType, Writer
 from app.schemas import UserCreate, UserFilter
 
 
@@ -25,6 +25,7 @@ async def create_user(db: AsyncSession, user_data: UserCreate, user_type: UserTy
     await db.refresh(new_user)
     return new_user
 
+
 async def load_user(db: AsyncSession, user_id: UUID) -> User | None:
     user = await db.scalar(select(User).where(User.id == user_id))
     if user:
@@ -44,6 +45,7 @@ async def resolve_profile(user: User) -> Client | Writer | Designer | Agency | N
             return user.agency
         case _:
             return None
+
 
 async def get_profile(
     db: AsyncSession, *, user_id: UUID

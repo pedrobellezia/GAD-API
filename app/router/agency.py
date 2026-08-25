@@ -1,26 +1,27 @@
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_profile, get_current_user
-from app.models import User, UserType, Client, Writer, Designer
+from app.models import Client, Designer, User, UserType, Writer
 from app.schemas import (
-    DetailsResponse,
-    InviteTokenPayload,
     AgencyRead,
     ClientRead,
-    WriterRead,
     DesignerRead,
+    DetailsResponse,
+    InviteTokenPayload,
+    WriterRead,
 )
 from app.services import resolve_profile
 from app.services.agency import (
-    link_member_by_token,
-    unlink_member,
     get_member_agency,
     get_my_clients,
-    get_my_writers,
     get_my_designers,
+    get_my_writers,
+    link_member_by_token,
+    unlink_member,
 )
 from app.services.user import get_profile
 
@@ -106,6 +107,7 @@ async def route_get_clients(
         return await get_my_clients(db=db, agency_id=user.id)
     member = await resolve_profile(user)
     return await get_my_clients(db=db, agency_id=member.agency_id)
+
 
 @router.get(
     path="/writers",

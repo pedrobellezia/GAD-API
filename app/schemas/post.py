@@ -1,28 +1,28 @@
 from datetime import datetime
-from typing import Optional, List, Literal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import Post, PostStatus
-from app.utils.types import NonEmptyStr
 from app.schemas.postmedia import PostMediaCreate, PostMediaRead
+from app.utils.types import NonEmptyStr
 
 
 class PostCreate(BaseModel):
     title: NonEmptyStr
     content: NonEmptyStr
     client_id: UUID
-    medias: Optional[List[PostMediaCreate]] = None
+    medias: list[PostMediaCreate] | None = None
 
 
 class PostUpdate(BaseModel):
-    title: Optional[NonEmptyStr] = None
-    content: Optional[NonEmptyStr] = None
-    client_id: Optional[UUID] = None
-    status: Optional[PostStatus] = None
+    title: NonEmptyStr | None = None
+    content: NonEmptyStr | None = None
+    client_id: UUID | None = None
+    status: PostStatus | None = None
     version: int
-    medias: Optional[List[PostMediaCreate]] = None
+    medias: list[PostMediaCreate] | None = None
 
 
 class PostRead(BaseModel):
@@ -31,10 +31,10 @@ class PostRead(BaseModel):
     content: str
     status: PostStatus
     version: int
-    agency_id: Optional[UUID] = None
-    client_id: Optional[UUID] = None
-    writer_id: Optional[UUID] = None
-    medias: List[PostMediaRead] = []
+    agency_id: UUID | None = None
+    client_id: UUID | None = None
+    writer_id: UUID | None = None
+    medias: list[PostMediaRead] = []
     created_at: datetime
     updated_at: datetime
 
@@ -42,12 +42,12 @@ class PostRead(BaseModel):
 
 
 class PostFilter(BaseModel):
-    id: Optional[UUID] = None
-    title: Optional[str] = None
-    status: Optional[PostStatus] = None
-    agency_id: Optional[UUID] = None
-    client_id: Optional[UUID] = None
-    writer_id: Optional[UUID] = None
+    id: UUID | None = None
+    title: str | None = None
+    status: PostStatus | None = None
+    agency_id: UUID | None = None
+    client_id: UUID | None = None
+    writer_id: UUID | None = None
     order_by: Literal["new", "old"] = "new"
     skip: int = Field(default=0, ge=0)
     limit: int = Field(default=100, ge=1, le=1000)

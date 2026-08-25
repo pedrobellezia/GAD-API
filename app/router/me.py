@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,17 +7,22 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models import User, UserType
 from app.schemas import (
-    DetailsResponse,
     AgencyRead,
     ClientRead,
-    WriterRead,
     DesignerRead,
+    DetailsResponse,
+    WriterRead,
 )
-from app.services import get_my_clients, get_my_designers, get_my_writers, resolve_profile
+from app.services import (
+    get_my_clients,
+    get_my_designers,
+    get_my_writers,
+    resolve_profile,
+)
 from app.services.agency import get_agency_me, unlink_member
 from app.services.client import get_client_me
-from app.services.writer import get_writer_me
 from app.services.designer import get_designer_me
+from app.services.writer import get_writer_me
 
 router = APIRouter()
 
@@ -60,7 +66,7 @@ async def route_delete_me(
         users_list = [
             *(await get_my_writers(db, user.id)),
             *(await get_my_designers(db, user.id)),
-            *(await get_my_clients(db, user.id))
+            *(await get_my_clients(db, user.id)),
         ]
         for i in users_list:
             await unlink_member(db, i, requesting_agency_id=user.id)
@@ -68,6 +74,6 @@ async def route_delete_me(
         member = await resolve_profile(user)
         if member.agency_id:
             await unlink_member(db, member)
-    user.deleted_at = datetime.now(timezone.utc)
+    user.deleted_at = datetime.now(UTC)
     await db.commit()
     return {"details": "Usuário deletado com sucesso"}

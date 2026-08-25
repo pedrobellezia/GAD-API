@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import enum
 import uuid
-from typing import Optional
+from enum import StrEnum
 
-from sqlalchemy import String, Uuid, Enum as alchemyEnum, DateTime
+from sqlalchemy import DateTime, String, Uuid
+from sqlalchemy import Enum as alchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
 
 
-class UserType(str, enum.Enum):
+class UserType(StrEnum):
     admin = "admin"
     client = "client"
     writer = "writer"
@@ -32,15 +32,15 @@ class User(Base):
         DateTime(timezone=True), nullable=True, index=True
     )
 
-    client: Mapped[Optional["Client"]] = relationship(
+    client: Mapped[Client | None] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    writer: Mapped[Optional["Writer"]] = relationship(
+    writer: Mapped[Writer | None] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    agency: Mapped[Optional["Agency"]] = relationship(
+    agency: Mapped[Agency | None] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    designer: Mapped[Optional["Designer"]] = relationship(
+    designer: Mapped[Designer | None] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )

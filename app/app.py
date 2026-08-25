@@ -1,18 +1,24 @@
-from app.core import get_env
-
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import IntegrityError
 
+from app.core import get_env
 from app.exceptions import (
+    CustomAppError,
+    custom_error_handler,
+    integrity_error_handler,
     request_validation_handler,
     response_validation_handler,
-    integrity_error_handler,
-    custom_error_handler,
-    CustomAppError,
 )
-from app.router import agency_router, auth_router, me_router, media_router, post_router, invite_token_router
-from fastapi.middleware.cors import CORSMiddleware
+from app.router import (
+    agency_router,
+    auth_router,
+    invite_token_router,
+    me_router,
+    media_router,
+    post_router,
+)
 
 app = FastAPI(title="Gad API")
 

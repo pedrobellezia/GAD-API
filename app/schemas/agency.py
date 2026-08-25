@@ -1,7 +1,7 @@
-from typing import Optional, Annotated, Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models import Agency, User
 from app.schemas.user import UserCreate, UserRead
@@ -23,10 +23,10 @@ class AgencyRead(BaseModel):
 
 
 class AgencyFilter(BaseModel):
-    id: Optional[UUID] = None
-    user_email: Optional[EmailStr] = None
-    user_name: Optional[str] = None
-    cnpj: Optional[str] = None
+    id: UUID | None = None
+    user_email: EmailStr | None = None
+    user_name: str | None = None
+    cnpj: str | None = None
     order_by: Literal["new", "old"] = "new"
     skip: Annotated[int, Field(ge=0)] = 0
     limit: Annotated[int, Field(ge=1)] = 100

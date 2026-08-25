@@ -1,22 +1,21 @@
-from sqlalchemy import text, select
+from fastapi import HTTPException, status
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import HTTPException, status
-
-from app.core import pswd_hasher, create_token
+from app.core import create_token, pswd_hasher
 from app.models import User
 from app.schemas import (
-    RegisterPayload,
-    LoginPayload,
     AgencyCreate,
-    WriterCreate,
     ClientCreate,
+    LoginPayload,
+    RegisterPayload,
+    WriterCreate,
 )
 from app.schemas.designer import DesignerCreate
 from app.services import create_agency
+from app.services.client import create_client
 from app.services.designer import create_designer
 from app.services.writer import create_writer
-from app.services.client import create_client
 
 
 async def login(db: AsyncSession, payload: LoginPayload) -> str:

@@ -1,9 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import contains_eager, aliased, selectinload
+from sqlalchemy.orm import aliased, contains_eager, selectinload
 
 from app.core import pswd_hasher
-from app.models import Client, Agency, User, UserType
+from app.models import Agency, Client, User, UserType
 from app.schemas import ClientCreate, ClientFilter
 
 

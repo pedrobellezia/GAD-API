@@ -1,5 +1,6 @@
-from pydantic_core import PydanticCustomError
 import re
+
+from pydantic_core import PydanticCustomError
 
 
 def non_empty(value):
@@ -19,7 +20,9 @@ def validate_cnpj(cnpj: str) -> str:
         raise ValueError("CNPJ inválido")
 
     def calc_digit(cnpj_partial: str, weights: list[int]) -> str:
-        total = sum(int(num) * weight for num, weight in zip(cnpj_partial, weights))
+        total = sum(
+            int(num) * weight for num, weight in zip(cnpj_partial, weights, strict=True)
+        )
 
         remainder = total % 11
         digit = 0 if remainder < 2 else 11 - remainder

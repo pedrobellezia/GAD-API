@@ -1,16 +1,16 @@
-from typing import Optional, Annotated, Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.models import Writer, Agency, User
+from app.models import Agency, User, Writer
 from app.schemas.agency import AgencyRead
 from app.schemas.user import UserCreate, UserRead
 
 
 class WriterCreate(BaseModel):
     kind: Literal["writer"]
-    agency_id: Optional[UUID] = None
+    agency_id: UUID | None = None
     user: UserCreate
 
 
@@ -30,11 +30,11 @@ class WriterRead(BaseModel):
 
 
 class WriterFilter(BaseModel):
-    id: Optional[UUID] = None
-    user_name: Optional[str] = None
-    user_email: Optional[EmailStr] = None
-    agency_cnpj: Optional[str] = None
-    agency_name: Optional[str] = None
+    id: UUID | None = None
+    user_name: str | None = None
+    user_email: EmailStr | None = None
+    agency_cnpj: str | None = None
+    agency_name: str | None = None
     order_by: Literal["new", "old"] = "new"
     skip: Annotated[int, Field(ge=0)] = 0
     limit: Annotated[int, Field(ge=1, le=1000)] = 100

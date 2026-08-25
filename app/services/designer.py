@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core import pswd_hasher
-from app.models import Agency, User, UserType, Designer
+from app.models import Agency, Designer, User, UserType
 from app.schemas.designer import DesignerCreate
 
 
