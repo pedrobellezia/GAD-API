@@ -5,6 +5,8 @@ from uuid import uuid4
 import aiofiles
 from fastapi import UploadFile
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import (
     ALLOWED_FILE_TYPES,
@@ -14,7 +16,38 @@ from app.core import (
     mime_detector,
 )
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import MediaType
+from app.models import Media, MediaType, User, UserType
+from app.schemas.media import MediaFilter
+
+
+async def get_medias(
+    db: AsyncSession,
+    user: User,
+    filters: MediaFilter,
+) -> list[Media]:
+    query = select(Media)
+
+    # RN-11: Visibilidade de mídias restrita à própria agência
+    if user.type == UserType.agency:
+        query = query.where(Media.agency_id == user.id)
+
+    elif user.type == UserType.writer:
+        if not user.writer or not user.writer.agency_id:
+            return []
+        query = query.where(Media.agency_id == user.writer.agency_id)
+
+    elif user.type == UserType.designer:
+        if not user.designer or not user.designer.agency_id:
+            return []
+        query = query.where(Media.agency_id == user.designer.agency_id)
+
+    else:
+        return []
+
+    query = filters.apply_filters(query)
+
+    result = await db.execute(query)
+    return list(result.scalars().unique().all())
 
 
 class MediaFileInfo(BaseModel):

@@ -5,13 +5,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import LOCAL_STORAGE_PATH
 from app.core.database import get_db
-from app.core.dependencies import get_current_profile
+from app.core.dependencies import get_current_profile, get_current_user
 from app.exceptions import CustomAppError
-from app.models import Designer, Media, UserType
-from app.schemas import DetailsResponse
-from app.services.media import store_media_file, validate_media_file
+from app.models import Designer, Media, User, UserType
+from app.schemas import DetailsResponse, MediaFilter, MediaRead
+from app.services.media import get_medias, store_media_file, validate_media_file
 
 router = APIRouter()
+
+
+@router.get(path="", status_code=status.HTTP_200_OK, response_model=list[MediaRead])
+async def route_get_medias(
+    filters: MediaFilter = Depends(),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user()),
+):
+    return await get_medias(
+        db=db,
+        user=user,
+        filters=filters,
+    )
 
 
 @router.post(
