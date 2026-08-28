@@ -28,7 +28,7 @@ class AgencyFilter(BaseModel):
     user_name: str | None = None
     cnpj: str | None = None
     order_by: Literal["new", "old"] = "new"
-    skip: Annotated[int, Field(ge=0)] = 0
+    page: Annotated[int, Field(ge=1)] = 1
     limit: Annotated[int, Field(ge=1)] = 100
 
     def apply_filters(self, query):
@@ -49,5 +49,5 @@ class AgencyFilter(BaseModel):
         else:
             query = query.order_by(Agency.created_at.desc())
 
-        query = query.offset(self.skip).limit(self.limit)
+        query = query.offset((self.page - 1) * self.limit).limit(self.limit)
         return query

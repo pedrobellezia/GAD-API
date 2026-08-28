@@ -36,7 +36,7 @@ class WriterFilter(BaseModel):
     agency_cnpj: str | None = None
     agency_name: str | None = None
     order_by: Literal["new", "old"] = "new"
-    skip: Annotated[int, Field(ge=0)] = 0
+    page: Annotated[int, Field(ge=1)] = 1
     limit: Annotated[int, Field(ge=1, le=1000)] = 100
 
     def apply_filters(self, query, agency_user=None):
@@ -60,5 +60,5 @@ class WriterFilter(BaseModel):
         else:
             query = query.order_by(Writer.created_at.desc())
 
-        query = query.offset(self.skip).limit(self.limit)
+        query = query.offset((self.page - 1) * self.limit).limit(self.limit)
         return query

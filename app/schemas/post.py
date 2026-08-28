@@ -49,7 +49,7 @@ class PostFilter(BaseModel):
     client_id: list[UUID] | None = None
     writer_id: list[UUID] | None = None
     order_by: Literal["new", "old"] = "new"
-    skip: int = Field(default=0, ge=0)
+    page: int = Field(default=1, ge=1)
     limit: int = Field(default=100, ge=1, le=1000)
 
     def apply_filters(self, query):
@@ -76,5 +76,5 @@ class PostFilter(BaseModel):
         else:
             query = query.order_by(Post.created_at.desc())
 
-        query = query.offset(self.skip).limit(self.limit)
+        query = query.offset((self.page - 1) * self.limit).limit(self.limit)
         return query

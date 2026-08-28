@@ -32,7 +32,7 @@ class UserFilter(BaseModel):
     email: EmailStr | None = None
     type: UserType | None = None
     order_by: Literal["new", "old"] = "new"
-    skip: Annotated[int, Field(ge=0)] = 0
+    page: Annotated[int, Field(ge=1)] = 1
     limit: Annotated[int, Field(ge=1, le=1000)] = 100
 
     def apply_filters(self, query):
@@ -53,5 +53,5 @@ class UserFilter(BaseModel):
         else:
             query = query.order_by(User.created_at.desc())
 
-        query = query.offset(self.skip).limit(self.limit)
+        query = query.offset((self.page - 1) * self.limit).limit(self.limit)
         return query
