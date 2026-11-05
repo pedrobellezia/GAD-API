@@ -205,14 +205,22 @@ async def update_post(
             error_type=CustomErrorType.conflict,
         )
 
-    # Se estiver alterando o cliente, validar pertencimento à agência
-    if post_data.client_id and post_data.client_id != post.client_id:
-        client = await db.scalar(select(Client).where(Client.id == post_data.client_id))
-        if not client or client.agency_id != post.agency_id:
+    if "client_id" in post_data.model_fields_set:
+        if user.type != UserType.agency:
             raise CustomAppError(
-                message="Cliente informado é inválido ou não pertence à agência",
-                error_type=CustomErrorType.bad_request,
+                message="Apenas a agência pode alterar o destinatário do post",
+                error_type=CustomErrorType.forbidden,
             )
+
+        if post_data.client_id is not None:
+            client = await db.scalar(
+                select(Client).where(Client.id == post_data.client_id)
+            )
+            if not client or client.agency_id != post.agency_id:
+                raise CustomAppError(
+                    message="Cliente informado é inválido ou não pertence à agência",
+                    error_type=CustomErrorType.bad_request,
+                )
         post.client_id = post_data.client_id
 
     if post_data.title is not None:
@@ -251,7 +259,8 @@ async def update_post(
         resource_name=post.title,
         message=(
             f"{user.name} atualizou o post '{previous_title}' "
-            f"(título atual: '{post.title}')."
+            f"(título atual: '{post.title}', destinatário: "
+            f"'{post.client_id}')."
         ),
     )
     await db.commit()
