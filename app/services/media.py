@@ -7,6 +7,7 @@ from fastapi import UploadFile
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core import (
     ALLOWED_FILE_TYPES,
@@ -16,8 +17,17 @@ from app.core import (
     mime_detector,
 )
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import Designer, Media, MediaType, User
-from app.schemas import MediaDesignerUpdate
+from app.models import (
+    Designer,
+    Media,
+    MediaType,
+    Post,
+    PostMedia,
+    PostStatus,
+    User,
+    UserType,
+)
+from app.schemas import MediaDesignerUpdate, MediaUpdate
 
 
 class MediaFileInfo(BaseModel):
@@ -121,3 +131,165 @@ async def update_media_designer(
 
     await db.commit()
     return media
+
+
+async def get_media_library(
+    db: AsyncSession,
+    user: User,
+) -> list[Media]:
+    if user.type == UserType.agency:
+        agency_id = user.id
+    elif user.type == UserType.writer:
+        agency_id = user.writer.agency_id if user.writer else None
+    elif user.type == UserType.designer:
+        agency_id = user.designer.agency_id if user.designer else None
+    else:
+        return []
+
+    if not agency_id:
+        return []
+
+    result = await db.scalars(
+        select(Media)
+        .where(Media.agency_id == agency_id)
+        .order_by(Media.created_at.desc())
+    )
+    return list(result.all())
+
+
+async def get_media_for_view(
+    db: AsyncSession,
+    media_id,
+    user: User,
+) -> Media:
+    media = await db.scalar(select(Media).where(Media.id == media_id))
+    if not media:
+        raise CustomAppError(
+            message="Mídia não encontrada",
+            error_type=CustomErrorType.not_found,
+        )
+
+    authorized = False
+    if user.type == UserType.agency:
+        authorized = media.agency_id == user.id
+    elif user.type == UserType.writer:
+        authorized = bool(user.writer and user.writer.agency_id == media.agency_id)
+    elif user.type == UserType.designer:
+        authorized = bool(user.designer and user.designer.agency_id == media.agency_id)
+    elif user.type == UserType.client:
+        authorized = (
+            await db.scalar(
+                select(PostMedia.id)
+                .join(PostMedia.post)
+                .where(
+                    PostMedia.media_id == media.id,
+                    Post.client_id == user.id,
+                    Post.status != PostStatus.draft,
+                )
+                .limit(1)
+            )
+            is not None
+        )
+
+    if not authorized:
+        raise CustomAppError(
+            message="Você não tem permissão para visualizar esta mídia",
+            error_type=CustomErrorType.forbidden,
+        )
+
+    return media
+
+
+def get_media_path(filename: str) -> Path:
+    root = LOCAL_STORAGE_PATH.resolve()
+    path = (root / filename).resolve()
+    if path.parent != root:
+        raise CustomAppError(
+            message="Caminho de mídia inválido",
+            error_type=CustomErrorType.internal_server_error,
+        )
+    return path
+
+
+async def update_media(
+    db: AsyncSession,
+    user: User,
+    media_id,
+    media_data: MediaUpdate,
+) -> Media:
+    media = await db.scalar(select(Media).where(Media.id == media_id))
+    if not media:
+        raise CustomAppError(
+            message="Mídia não encontrada",
+            error_type=CustomErrorType.not_found,
+        )
+
+    if user.type == UserType.agency:
+        authorized = media.agency_id == user.id
+    else:
+        authorized = user.type == UserType.designer and media.designer_id == user.id
+    if not authorized:
+        raise CustomAppError(
+            message="Apenas o Designer criador ou a Agência pode editar a mídia",
+            error_type=CustomErrorType.forbidden,
+        )
+
+    media.alias = media_data.alias
+    await db.commit()
+    return media
+
+
+async def delete_media(
+    db: AsyncSession,
+    user: User,
+    media_id,
+) -> None:
+    media = await db.scalar(
+        select(Media)
+        .options(selectinload(Media.post_medias).selectinload(PostMedia.post))
+        .where(Media.id == media_id)
+    )
+    if not media:
+        raise CustomAppError(
+            message="Mídia não encontrada",
+            error_type=CustomErrorType.not_found,
+        )
+
+    if user.type == UserType.agency:
+        authorized = media.agency_id == user.id
+    else:
+        authorized = user.type == UserType.designer and media.designer_id == user.id
+    if not authorized:
+        raise CustomAppError(
+            message="Apenas o Designer criador ou a Agência pode excluir a mídia",
+            error_type=CustomErrorType.forbidden,
+        )
+
+    posts = [post_media.post for post_media in media.post_medias]
+    if any(
+        post.status in (PostStatus.approved, PostStatus.denied, PostStatus.published)
+        for post in posts
+    ):
+        raise CustomAppError(
+            message="A mídia não pode ser excluída porque está vinculada a um post final",
+            error_type=CustomErrorType.conflict,
+        )
+
+    for post in posts:
+        post.status = PostStatus.draft
+
+    filename = media.filename
+    for post_media in media.post_medias:
+        await db.delete(post_media)
+    await db.delete(media)
+    await db.commit()
+
+    path = get_media_path(filename)
+    if path.exists():
+        try:
+            await asyncio.to_thread(path.unlink)
+        except OSError as exc:
+            raise CustomAppError(
+                message="Mídia removida do banco, mas não foi possível remover o arquivo",
+                error_type=CustomErrorType.internal_server_error,
+            ) from exc
