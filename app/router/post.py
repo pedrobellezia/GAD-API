@@ -13,6 +13,7 @@ from app.schemas import (
     PostRead,
     PostStatusUpdate,
     PostUpdate,
+    PostWriterUpdate,
 )
 from app.services import post as post_service
 
@@ -110,6 +111,26 @@ async def transition_post_status_route(
         user=user,
         post_id=post_id,
         status_data=status_data,
+    )
+
+
+@router.patch(
+    "/{post_id}/writer",
+    status_code=status.HTTP_200_OK,
+    response_model=PostRead,
+    summary="Alterar redator do post",
+)
+async def update_post_writer_route(
+    post_id: UUID,
+    writer_data: PostWriterUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user(UserType.agency)),
+):
+    return await post_service.update_post_writer(
+        db=db,
+        user=user,
+        post_id=post_id,
+        writer_data=writer_data,
     )
 
 
