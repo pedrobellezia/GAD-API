@@ -1,4 +1,5 @@
 from .agency import AgencyCreate, AgencyFilter, AgencyRead
+from .audit_log import AuditLogRead
 from .auth import (
     ChangePasswordPayload,
     JwtPayload,
@@ -34,6 +35,7 @@ __all__ = [
     "AgencyCreate",
     "AgencyRead",
     "AgencyFilter",
+    "AuditLogRead",
     "ClientCreate",
     "ClientRead",
     "ClientFilter",

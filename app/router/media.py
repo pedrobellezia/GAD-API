@@ -25,6 +25,7 @@ from app.schemas import (
     MediaRead,
     MediaUpdate,
 )
+from app.services.audit_log import record_audit
 from app.services.media import (
     delete_media,
     get_media_for_view,
@@ -162,6 +163,7 @@ async def route_upload_medias(
     aliases: list[str] = Form(...),
     db: AsyncSession = Depends(get_db),
     member: Designer = Depends(get_current_profile(UserType.designer)),
+    user: User = Depends(get_current_user(UserType.designer)),
 ):
     if len(aliases) != len(files):
         raise HTTPException(
@@ -206,6 +208,17 @@ async def route_upload_medias(
 
         if medias:
             db.add_all(medias)
+            for media in medias:
+                await record_audit(
+                    db,
+                    user=user,
+                    action="create",
+                    resource_type="media",
+                    resource_id=media.id,
+                    resource_name=media.alias,
+                    message=f"{user.name} enviou a mídia '{media.alias}'.",
+                    agency_id=member.agency_id,
+                )
 
         await db.commit()
         return {

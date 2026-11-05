@@ -22,6 +22,7 @@ from app.schemas import (
     PostUpdate,
     PostWriterUpdate,
 )
+from app.services.audit_log import record_audit
 
 
 async def get_posts(
@@ -157,6 +158,16 @@ async def create_post(
             )
             db.add(post_media)
 
+    await record_audit(
+        db,
+        user=user,
+        action="create",
+        resource_type="post",
+        resource_id=new_post.id,
+        resource_name=new_post.title,
+        message=f"{user.name} criou o post '{new_post.title}'.",
+        agency_id=agency_id,
+    )
     await db.commit()
     return await get_post_by_id(db, new_post.id)
 
@@ -168,6 +179,7 @@ async def update_post(
     post_data: PostUpdate,
 ) -> Post:
     post = await get_post_by_id(db, post_id, user=user)
+    previous_title = post.title
 
     # RN-15: Apenas a agência responsável ou o redator autor podem manipular o post
     if user.type == UserType.writer and post.writer_id != user.id:
@@ -230,6 +242,18 @@ async def update_post(
             )
             db.add(post_media)
 
+    await record_audit(
+        db,
+        user=user,
+        action="update",
+        resource_type="post",
+        resource_id=post.id,
+        resource_name=post.title,
+        message=(
+            f"{user.name} atualizou o post '{previous_title}' "
+            f"(título atual: '{post.title}')."
+        ),
+    )
     await db.commit()
     return await get_post_by_id(db, post.id)
 
@@ -297,6 +321,18 @@ async def transition_post_status(
         )
 
     post.status = next_status
+    await record_audit(
+        db,
+        user=user,
+        action="status_change",
+        resource_type="post",
+        resource_id=post.id,
+        resource_name=post.title,
+        message=(
+            f"{user.name} alterou o status do post '{post.title}' "
+            f"de '{current_status}' para '{next_status}'."
+        ),
+    )
     await db.commit()
     return await get_post_by_id(db, post.id)
 
@@ -308,6 +344,7 @@ async def update_post_writer(
     writer_data: PostWriterUpdate,
 ) -> Post:
     post = await get_post_by_id(db, post_id, user=user)
+    previous_writer_id = post.writer_id
 
     if user.type != UserType.agency or post.agency_id != user.id:
         raise CustomAppError(
@@ -337,6 +374,18 @@ async def update_post_writer(
             )
         post.writer_id = writer.id
 
+    await record_audit(
+        db,
+        user=user,
+        action="authorship_change",
+        resource_type="post",
+        resource_id=post.id,
+        resource_name=post.title,
+        message=(
+            f"{user.name} alterou a autoria do post '{post.title}' "
+            f"de '{previous_writer_id}' para '{post.writer_id}'."
+        ),
+    )
     await db.commit()
     return await get_post_by_id(db, post.id)
 
@@ -365,5 +414,15 @@ async def delete_post(
             error_type=CustomErrorType.forbidden,
         )
 
+    await record_audit(
+        db,
+        user=user,
+        action="delete",
+        resource_type="post",
+        resource_id=post.id,
+        resource_name=post.title,
+        message=f"{user.name} excluiu o post '{post.title}'.",
+        agency_id=post.agency_id,
+    )
     await db.delete(post)
     await db.commit()
