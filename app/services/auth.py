@@ -90,4 +90,13 @@ async def change_password(
         )
 
     user.pswd = pswd_hasher.hash(payload.new_password)
+    await record_audit(
+        db,
+        user=user,
+        action="password_change",
+        resource_type="user",
+        resource_id=user.id,
+        resource_name=user.name,
+        message=f"{user.name} alterou a própria senha.",
+    )
     await db.commit()
