@@ -11,6 +11,7 @@ from app.schemas import (
     RegisterPayload,
     WriterCreate,
 )
+from app.schemas.auth import ChangePasswordPayload
 from app.schemas.designer import DesignerCreate
 from app.services import create_agency
 from app.services.client import create_client
@@ -66,3 +67,17 @@ async def register(db: AsyncSession, payload: RegisterPayload) -> None:
 
         case DesignerCreate():
             await create_designer(db=db, designer_data=payload)
+
+
+async def change_password(
+    db: AsyncSession, user: User, payload: ChangePasswordPayload
+) -> None:
+    if not pswd_hasher.verify(payload.current_password, user.pswd):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Senha atual inválida")
+    if payload.current_password == payload.new_password:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "A nova senha deve ser diferente"
+        )
+
+    user.pswd = pswd_hasher.hash(payload.new_password)
+    await db.commit()

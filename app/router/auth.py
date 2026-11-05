@@ -2,8 +2,17 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.schemas import DetailsResponse, LoginPayload, LoginResponse, RegisterPayload
+from app.core.dependencies import get_current_user
+from app.models import User
+from app.schemas import (
+    ChangePasswordPayload,
+    DetailsResponse,
+    LoginPayload,
+    LoginResponse,
+    RegisterPayload,
+)
 from app.services import login, register
+from app.services.auth import change_password
 
 router = APIRouter()
 
@@ -27,3 +36,13 @@ async def route_register(
     await register(db, register_payload)
     await db.commit()
     return {"details": "Usuario criado com sucesso"}
+
+
+@router.patch("/password", response_model=DetailsResponse)
+async def route_change_password(
+    payload: ChangePasswordPayload,
+    user: User = Depends(get_current_user()),
+    db: AsyncSession = Depends(get_db),
+):
+    await change_password(db, user, payload)
+    return {"details": "Senha alterada com sucesso"}
