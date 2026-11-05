@@ -17,7 +17,7 @@ from .invite_token import (
     InviteTokenPayload,
     InviteTokenRead,
 )
-from .media import MediaRead
+from .media import MediaDesignerUpdate, MediaRead
 from .post import (
     PostCreate,
     PostFilter,
@@ -56,6 +56,7 @@ __all__ = [
     "LoginResponse",
     "JwtPayload",
     "MediaRead",
+    "MediaDesignerUpdate",
     "PostMediaCreate",
     "PostMediaRead",
     "PostCreate",

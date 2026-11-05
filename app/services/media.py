@@ -5,6 +5,8 @@ from uuid import uuid4
 import aiofiles
 from fastapi import UploadFile
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import (
     ALLOWED_FILE_TYPES,
@@ -14,7 +16,8 @@ from app.core import (
     mime_detector,
 )
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import MediaType
+from app.models import Designer, Media, MediaType, User
+from app.schemas import MediaDesignerUpdate
 
 
 class MediaFileInfo(BaseModel):
@@ -83,3 +86,38 @@ async def store_media_file(file: UploadFile, extension: str):
     finally:
         if not done and full_path.exists():
             await asyncio.to_thread(full_path.unlink)
+
+
+async def update_media_designer(
+    db: AsyncSession,
+    user: User,
+    media_id,
+    designer_data: MediaDesignerUpdate,
+) -> Media:
+    media = await db.scalar(
+        select(Media).where(Media.id == media_id, Media.agency_id == user.id)
+    )
+    if not media:
+        raise CustomAppError(
+            message="Mídia não encontrada",
+            error_type=CustomErrorType.not_found,
+        )
+
+    if designer_data.designer_id is None:
+        media.designer_id = None
+    else:
+        designer = await db.scalar(
+            select(Designer).where(
+                Designer.id == designer_data.designer_id,
+                Designer.agency_id == media.agency_id,
+            )
+        )
+        if not designer:
+            raise CustomAppError(
+                message="Designer inválido ou não vinculado à agência da mídia",
+                error_type=CustomErrorType.bad_request,
+            )
+        media.designer_id = designer.id
+
+    await db.commit()
+    return media
