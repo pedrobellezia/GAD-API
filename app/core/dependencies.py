@@ -39,6 +39,13 @@ def get_current_user(*req_types: UserType):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        if user.deleted_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Conta desativada",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         if req_types and user.type not in req_types:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

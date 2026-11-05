@@ -26,7 +26,14 @@ from .postmedia import (
     remove_media_from_post,
     update_media_position,
 )
-from .user import create_user, get_profile, get_users, load_user, resolve_profile
+from .user import (
+    create_user,
+    deactivate_user,
+    get_profile,
+    get_users,
+    load_user,
+    resolve_profile,
+)
 from .writer import create_writer, get_writers
 
 __all__ = [
@@ -42,6 +49,7 @@ __all__ = [
     "create_designer",
     "get_designer_me",
     "create_user",
+    "deactivate_user",
     "get_users",
     "create_writer",
     "get_writers",
