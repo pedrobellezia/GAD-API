@@ -4,8 +4,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager, selectinload
 
 from app.core import pswd_hasher
-from app.models import Agency, Client, Designer, InviteToken, User, UserType, Writer
+from app.models import (
+    Agency,
+    Client,
+    Designer,
+    InviteToken,
+    Media,
+    Post,
+    PostStatus,
+    User,
+    UserType,
+    Writer,
+)
 from app.schemas import AgencyCreate, AgencyFilter
+from app.services.audit_log import record_audit
 
 
 async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
@@ -102,6 +114,7 @@ async def unlink_member(
     db: AsyncSession,
     member: Client | Writer | Designer,
     *,
+    actor: User,
     requesting_agency_id=None,
 ) -> None:
     is_self_unlink = requesting_agency_id is None
@@ -123,7 +136,105 @@ async def unlink_member(
             detail="Usuario não esta vinculado a sua agencia",
         )
 
+    agency_id = member.agency_id
+    member_name = member.user.name
+
+    if isinstance(member, Writer):
+        posts = list(
+            (
+                await db.scalars(
+                    select(Post).where(
+                        Post.writer_id == member.id,
+                        Post.agency_id == agency_id,
+                    )
+                )
+            ).all()
+        )
+        for post in posts:
+            post.writer_id = None
+            await record_audit(
+                db,
+                user=actor,
+                action="authorship_change",
+                resource_type="post",
+                resource_id=post.id,
+                resource_name=post.title,
+                agency_id=agency_id,
+                message=(
+                    f"{actor.name} removeu a autoria do redator "
+                    f"{member_name} do post '{post.title}'."
+                ),
+            )
+    elif isinstance(member, Designer):
+        medias = list(
+            (
+                await db.scalars(
+                    select(Media).where(
+                        Media.designer_id == member.id,
+                        Media.agency_id == agency_id,
+                    )
+                )
+            ).all()
+        )
+        for media in medias:
+            media.designer_id = None
+            await record_audit(
+                db,
+                user=actor,
+                action="authorship_change",
+                resource_type="media",
+                resource_id=media.id,
+                resource_name=media.alias,
+                agency_id=agency_id,
+                message=(
+                    f"{actor.name} removeu a autoria do designer "
+                    f"{member_name} da mídia '{media.alias}'."
+                ),
+            )
+    elif isinstance(member, Client):
+        posts = list(
+            (
+                await db.scalars(
+                    select(Post).where(
+                        Post.client_id == member.id,
+                        Post.agency_id == agency_id,
+                    )
+                )
+            ).all()
+        )
+        for post in posts:
+            previous_status = post.status
+            if post.status != PostStatus.published:
+                post.client_id = None
+            if post.status in (PostStatus.review, PostStatus.approved):
+                post.status = PostStatus.draft
+            await record_audit(
+                db,
+                user=actor,
+                action="member_unlink",
+                resource_type="post",
+                resource_id=post.id,
+                resource_name=post.title,
+                agency_id=agency_id,
+                message=(
+                    f"{actor.name} desvinculou o cliente {member_name} do post "
+                    f"'{post.title}'; status: '{previous_status}' para "
+                    f"'{post.status}', referência do cliente "
+                    f"{'preservada' if post.status == PostStatus.published else 'removida'}."
+                ),
+            )
+
     member.agency_id = None
+    await record_audit(
+        db,
+        user=actor,
+        action="member_unlink",
+        resource_type="user",
+        resource_id=member.id,
+        resource_name=member_name,
+        agency_id=agency_id,
+        message=f"{actor.name} desvinculou {member_name} da agência.",
+    )
     await db.commit()
 
 
