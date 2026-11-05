@@ -22,6 +22,7 @@ from .post import (
     PostCreate,
     PostFilter,
     PostRead,
+    PostStatusUpdate,
     PostUpdate,
 )
 from .postmedia import PostMediaCreate, PostMediaRead
@@ -58,6 +59,7 @@ __all__ = [
     "PostMediaRead",
     "PostCreate",
     "PostRead",
+    "PostStatusUpdate",
     "PostUpdate",
     "PostFilter",
     "ChangePasswordPayload",

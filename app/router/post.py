@@ -11,6 +11,7 @@ from app.schemas import (
     PostCreate,
     PostFilter,
     PostRead,
+    PostStatusUpdate,
     PostUpdate,
 )
 from app.services import post as post_service
@@ -89,6 +90,26 @@ async def update_post_route(
         user=user,
         post_id=post_id,
         post_data=post_data,
+    )
+
+
+@router.patch(
+    "/{post_id}/status",
+    status_code=status.HTTP_200_OK,
+    response_model=PostRead,
+    summary="Alterar status do post",
+)
+async def transition_post_status_route(
+    post_id: UUID,
+    status_data: PostStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user()),
+):
+    return await post_service.transition_post_status(
+        db=db,
+        user=user,
+        post_id=post_id,
+        status_data=status_data,
     )
 
 
