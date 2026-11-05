@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import Client, Media, Post, PostMedia, User, UserType
-from app.schemas import PostCreate, PostFilter, PostUpdate
+from app.models import Client, Media, Post, PostMedia, PostStatus, User, UserType
+from app.schemas import PostCreate, PostFilter, PostStatusUpdate, PostUpdate
 
 
 async def get_posts(
@@ -215,6 +215,73 @@ async def update_post(
             )
             db.add(post_media)
 
+    await db.commit()
+    return await get_post_by_id(db, post.id)
+
+
+async def transition_post_status(
+    db: AsyncSession,
+    user: User,
+    post_id: UUID,
+    status_data: PostStatusUpdate,
+) -> Post:
+    post = await get_post_by_id(db, post_id, user=user)
+
+    if post.version != status_data.version:
+        raise CustomAppError(
+            message="O post foi modificado por outro usuário. Recarregue e tente novamente.",
+            error_type=CustomErrorType.conflict,
+        )
+
+    current_status = post.status
+    next_status = status_data.status
+
+    if current_status in (PostStatus.denied, PostStatus.published):
+        raise CustomAppError(
+            message="Posts negados ou publicados não podem ter o status alterado",
+            error_type=CustomErrorType.bad_request,
+        )
+
+    allowed_transitions = {
+        PostStatus.draft: {PostStatus.review},
+        PostStatus.review: {PostStatus.approved, PostStatus.denied, PostStatus.draft},
+        PostStatus.approved: {PostStatus.published, PostStatus.draft},
+    }
+    if next_status not in allowed_transitions.get(current_status, set()):
+        raise CustomAppError(
+            message=f"Transição de {current_status} para {next_status} não permitida",
+            error_type=CustomErrorType.bad_request,
+        )
+
+    if next_status == PostStatus.review and not post.medias:
+        raise CustomAppError(
+            message="O post precisa ter pelo menos uma mídia para entrar em revisão",
+            error_type=CustomErrorType.bad_request,
+        )
+
+    if next_status in (PostStatus.approved, PostStatus.denied):
+        if user.type != UserType.client or post.client_id != user.id:
+            raise CustomAppError(
+                message="Apenas o cliente do post pode aprovar ou reprovar",
+                error_type=CustomErrorType.forbidden,
+            )
+    elif user.type not in (UserType.agency, UserType.writer):
+        raise CustomAppError(
+            message="Apenas a agência ou o redator podem alterar este status",
+            error_type=CustomErrorType.forbidden,
+        )
+    elif user.type == UserType.writer and post.writer_id != user.id:
+        raise CustomAppError(
+            message="Apenas o redator autor pode alterar este status",
+            error_type=CustomErrorType.forbidden,
+        )
+    elif user.type == UserType.agency and post.agency_id != user.id:
+        raise CustomAppError(
+            message="Apenas a agência responsável pode alterar este status",
+            error_type=CustomErrorType.forbidden,
+        )
+
+    post.status = next_status
     await db.commit()
     return await get_post_by_id(db, post.id)
 
