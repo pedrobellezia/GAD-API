@@ -13,6 +13,7 @@ from app.exceptions import (
 )
 from app.router import (
     agency_router,
+    audit_log_router,
     auth_router,
     invite_token_router,
     me_router,
@@ -23,6 +24,7 @@ from app.router import (
 app = FastAPI(title="Gad API")
 
 app.include_router(agency_router, prefix="/agency", tags=["agency"])
+app.include_router(audit_log_router, prefix="/audit-logs", tags=["audit"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(me_router, prefix="/me", tags=["me"])
 app.include_router(media_router, prefix="/media", tags=["media"])
