@@ -50,12 +50,15 @@ async def route_link_agency(
     response_model=DetailsResponse,
 )
 async def route_unlink_agency_self(
+    user: User = Depends(
+        get_current_user(UserType.writer, UserType.client, UserType.designer)
+    ),
     member: Writer | Client | Designer = Depends(
         get_current_profile(UserType.writer, UserType.client, UserType.designer)
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    await unlink_member(db=db, member=member)
+    await unlink_member(db=db, member=member, actor=user)
     return {"details": "Usuário desvinculado da agencia com sucesso"}
 
 
@@ -88,7 +91,12 @@ async def route_agency_member_unlink(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Usuario nao encontrado"
         )
-    await unlink_member(db=db, member=member, requesting_agency_id=user.id)
+    await unlink_member(
+        db=db,
+        member=member,
+        actor=user,
+        requesting_agency_id=user.id,
+    )
     return {"details": "Usuario desvinculado com sucesso"}
 
 
