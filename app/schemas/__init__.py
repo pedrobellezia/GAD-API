@@ -1,5 +1,11 @@
 from .agency import AgencyCreate, AgencyFilter, AgencyRead
-from .auth import JwtPayload, LoginPayload, LoginResponse, RegisterPayload
+from .auth import (
+    ChangePasswordPayload,
+    JwtPayload,
+    LoginPayload,
+    LoginResponse,
+    RegisterPayload,
+)
 from .client import ClientCreate, ClientFilter, ClientRead, ClientReadNoAgency
 from .common import DetailsResponse
 from .designer import (
@@ -54,4 +60,5 @@ __all__ = [
     "PostRead",
     "PostUpdate",
     "PostFilter",
+    "ChangePasswordPayload",
 ]

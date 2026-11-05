@@ -20,6 +20,11 @@ class LoginResponse(BaseModel):
     token: str
 
 
+class ChangePasswordPayload(BaseModel):
+    current_password: NonEmptyStr
+    new_password: NonEmptyStr
+
+
 class JwtPayload(BaseModel):
     sub: UUID
     exp: int
