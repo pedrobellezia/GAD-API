@@ -1,5 +1,3 @@
-from datetime import UTC, datetime
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,15 +11,10 @@ from app.schemas import (
     DetailsResponse,
     WriterRead,
 )
-from app.services import (
-    get_my_clients,
-    get_my_designers,
-    get_my_writers,
-    resolve_profile,
-)
-from app.services.agency import get_agency_me, unlink_member
+from app.services.agency import get_agency_me
 from app.services.client import get_client_me
 from app.services.designer import get_designer_me
+from app.services.user import deactivate_user
 from app.services.writer import get_writer_me
 
 router = APIRouter()
@@ -63,17 +56,10 @@ async def route_delete_me(
     db: AsyncSession = Depends(get_db),
 ):
     if user.type == UserType.agency:
-        users_list = [
-            *(await get_my_writers(db, user.id)),
-            *(await get_my_designers(db, user.id)),
-            *(await get_my_clients(db, user.id)),
-        ]
-        for i in users_list:
-            await unlink_member(db, i, requesting_agency_id=user.id)
-    else:
-        member = await resolve_profile(user)
-        if member.agency_id:
-            await unlink_member(db, member)
-    user.deleted_at = datetime.now(UTC)
-    await db.commit()
-    return {"details": "Usuário deletado com sucesso"}
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="A desativação de agências não está disponível",
+        )
+
+    await deactivate_user(db=db, user=user)
+    return {"details": "Usuário desativado com sucesso"}

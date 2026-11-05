@@ -14,6 +14,7 @@ from app.schemas import (
 from app.schemas.auth import ChangePasswordPayload
 from app.schemas.designer import DesignerCreate
 from app.services import create_agency
+from app.services.audit_log import record_audit
 from app.services.client import create_client
 from app.services.designer import create_designer
 from app.services.writer import create_writer
@@ -39,10 +40,19 @@ async def login(db: AsyncSession, payload: LoginPayload) -> str:
 
     if result.deleted_at is not None:
         if payload.restore:
-            await db.execute(
-                text("SELECT restore_user(:email)"),
-                {"email": payload.email},
+            result.deleted_at = None
+            await db.flush()
+            await db.refresh(result, [result.type.value])
+            await record_audit(
+                db,
+                user=result,
+                action="restore",
+                resource_type="user",
+                resource_id=result.id,
+                resource_name=result.name,
+                message=f"{result.name} restaurou a própria conta.",
             )
+            await db.commit()
         else:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
