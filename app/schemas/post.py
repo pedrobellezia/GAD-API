@@ -20,9 +20,13 @@ class PostUpdate(BaseModel):
     title: NonEmptyStr | None = None
     content: NonEmptyStr | None = None
     client_id: UUID | None = None
-    status: PostStatus | None = None
     version: int
     medias: list[PostMediaCreate] | None = None
+
+
+class PostStatusUpdate(BaseModel):
+    status: PostStatus
+    version: int
 
 
 class PostRead(BaseModel):
