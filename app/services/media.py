@@ -28,6 +28,7 @@ from app.models import (
     UserType,
 )
 from app.schemas import MediaDesignerUpdate, MediaUpdate
+from app.services.audit_log import record_audit
 
 
 class MediaFileInfo(BaseModel):
@@ -113,6 +114,7 @@ async def update_media_designer(
             error_type=CustomErrorType.not_found,
         )
 
+    previous_designer_id = media.designer_id
     if designer_data.designer_id is None:
         media.designer_id = None
     else:
@@ -129,6 +131,18 @@ async def update_media_designer(
             )
         media.designer_id = designer.id
 
+    await record_audit(
+        db,
+        user=user,
+        action="authorship_change",
+        resource_type="media",
+        resource_id=media.id,
+        resource_name=media.alias,
+        message=(
+            f"{user.name} alterou a autoria da mídia '{media.alias}' "
+            f"de '{previous_designer_id}' para '{media.designer_id}'."
+        ),
+    )
     await db.commit()
     return media
 
@@ -234,7 +248,20 @@ async def update_media(
             error_type=CustomErrorType.forbidden,
         )
 
+    previous_alias = media.alias
     media.alias = media_data.alias
+    await record_audit(
+        db,
+        user=user,
+        action="update",
+        resource_type="media",
+        resource_id=media.id,
+        resource_name=media.alias,
+        message=(
+            f"{user.name} alterou o alias da mídia '{previous_alias}' "
+            f"para '{media.alias}'."
+        ),
+    )
     await db.commit()
     return media
 
@@ -279,6 +306,16 @@ async def delete_media(
         post.status = PostStatus.draft
 
     filename = media.filename
+    await record_audit(
+        db,
+        user=user,
+        action="delete",
+        resource_type="media",
+        resource_id=media.id,
+        resource_name=media.alias,
+        message=f"{user.name} excluiu a mídia '{media.alias}'.",
+        agency_id=media.agency_id,
+    )
     for post_media in media.post_medias:
         await db.delete(post_media)
     await db.delete(media)

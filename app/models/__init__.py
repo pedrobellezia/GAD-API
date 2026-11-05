@@ -1,4 +1,5 @@
 from .agency import Agency
+from .audit_log import AuditLog
 from .client import Client
 from .designer import Designer
 from .invite_token import InviteToken
@@ -14,6 +15,7 @@ __all__ = [
     "Client",
     "Writer",
     "Agency",
+    "AuditLog",
     "Media",
     "MediaType",
     "Post",

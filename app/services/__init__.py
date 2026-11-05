@@ -5,6 +5,7 @@ from .agency import (
     get_my_designers,
     get_my_writers,
 )
+from .audit_log import get_audit_logs, record_audit
 from .auth import login, register
 from .client import create_client, get_clients
 from .designer import create_designer, get_designer_me
@@ -30,6 +31,8 @@ from .writer import create_writer, get_writers
 
 __all__ = [
     "create_agency",
+    "get_audit_logs",
+    "record_audit",
     "get_agencies",
     "get_my_clients",
     "get_my_writers",
