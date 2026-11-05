@@ -3,6 +3,10 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 
+class MediaDesignerUpdate(BaseModel):
+    designer_id: UUID | None = None
+
+
 class MediaRead(BaseModel):
     id: UUID
     designer_id: UUID | None = None

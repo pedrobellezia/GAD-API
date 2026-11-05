@@ -9,6 +9,7 @@ from .auth import login, register
 from .client import create_client, get_clients
 from .designer import create_designer, get_designer_me
 from .invite_token import create_invite_tokens
+from .media import update_media_designer
 from .post import (
     create_post,
     delete_post,
@@ -44,6 +45,7 @@ __all__ = [
     "login",
     "register",
     "create_invite_tokens",
+    "update_media_designer",
     "get_profile",
     "get_posts",
     "get_post_by_id",
