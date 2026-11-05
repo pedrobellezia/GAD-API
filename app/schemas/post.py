@@ -29,6 +29,11 @@ class PostStatusUpdate(BaseModel):
     version: int
 
 
+class PostWriterUpdate(BaseModel):
+    writer_id: UUID | None = None
+    version: int
+
+
 class PostRead(BaseModel):
     id: UUID
     title: str

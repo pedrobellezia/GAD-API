@@ -5,8 +5,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import Client, Media, Post, PostMedia, PostStatus, User, UserType
-from app.schemas import PostCreate, PostFilter, PostStatusUpdate, PostUpdate
+from app.models import (
+    Client,
+    Media,
+    Post,
+    PostMedia,
+    PostStatus,
+    User,
+    UserType,
+    Writer,
+)
+from app.schemas import (
+    PostCreate,
+    PostFilter,
+    PostStatusUpdate,
+    PostUpdate,
+    PostWriterUpdate,
+)
 
 
 async def get_posts(
@@ -282,6 +297,46 @@ async def transition_post_status(
         )
 
     post.status = next_status
+    await db.commit()
+    return await get_post_by_id(db, post.id)
+
+
+async def update_post_writer(
+    db: AsyncSession,
+    user: User,
+    post_id: UUID,
+    writer_data: PostWriterUpdate,
+) -> Post:
+    post = await get_post_by_id(db, post_id, user=user)
+
+    if user.type != UserType.agency or post.agency_id != user.id:
+        raise CustomAppError(
+            message="Apenas a agência responsável pode alterar a autoria do post",
+            error_type=CustomErrorType.forbidden,
+        )
+
+    if post.version != writer_data.version:
+        raise CustomAppError(
+            message="O post foi modificado por outro usuário. Recarregue e tente novamente.",
+            error_type=CustomErrorType.conflict,
+        )
+
+    if writer_data.writer_id is None:
+        post.writer_id = None
+    else:
+        writer = await db.scalar(
+            select(Writer).where(
+                Writer.id == writer_data.writer_id,
+                Writer.agency_id == post.agency_id,
+            )
+        )
+        if not writer:
+            raise CustomAppError(
+                message="Redator inválido ou não vinculado à agência do post",
+                error_type=CustomErrorType.bad_request,
+            )
+        post.writer_id = writer.id
+
     await db.commit()
     return await get_post_by_id(db, post.id)
 

@@ -16,6 +16,7 @@ from .post import (
     get_posts,
     transition_post_status,
     update_post,
+    update_post_writer,
 )
 from .postmedia import (
     add_media_to_post,
@@ -49,6 +50,7 @@ __all__ = [
     "create_post",
     "update_post",
     "transition_post_status",
+    "update_post_writer",
     "delete_post",
     "add_media_to_post",
     "remove_media_from_post",
