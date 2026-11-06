@@ -207,6 +207,15 @@ async def update_post(
             error_type=CustomErrorType.conflict,
         )
 
+    # RN-20: Imutabilidade de posts em estados finais
+    if post.status in (PostStatus.denied, PostStatus.published):
+        raise CustomAppError(
+            message="Posts negados ou publicados não podem ser alterados",
+            error_type=CustomErrorType.bad_request,
+        )
+
+    previous_status = post.status
+
     if "client_id" in post_data.model_fields_set:
         if user.type != UserType.agency:
             raise CustomAppError(
@@ -224,6 +233,11 @@ async def update_post(
                     error_type=CustomErrorType.bad_request,
                 )
         post.client_id = post_data.client_id
+        if post.client_id is None and post.status in (
+            PostStatus.review,
+            PostStatus.approved,
+        ):
+            post.status = PostStatus.draft
 
     if post_data.title is not None:
         post.title = post_data.title
@@ -251,6 +265,24 @@ async def update_post(
                 position=media_item.position,
             )
             db.add(post_media)
+
+        # RN-13 / RN-19: Draft é o único status em que o post pode permanecer sem mídia
+        if not post_data.medias and post.status != PostStatus.draft:
+            post.status = PostStatus.draft
+
+    if post.status != previous_status:
+        await record_audit(
+            db,
+            user=user,
+            action="status_change",
+            resource_type="post",
+            resource_id=post.id,
+            resource_name=post.title,
+            message=(
+                f"{user.name} reverteu o status do post '{post.title}' "
+                f"de '{previous_status}' para '{post.status}'."
+            ),
+        )
 
     await record_audit(
         db,
@@ -303,9 +335,15 @@ async def transition_post_status(
             error_type=CustomErrorType.bad_request,
         )
 
-    if next_status == PostStatus.review and not post.medias:
+    if next_status != PostStatus.draft and not post.medias:
         raise CustomAppError(
             message="O post precisa ter pelo menos uma mídia para entrar em revisão",
+            error_type=CustomErrorType.bad_request,
+        )
+
+    if next_status != PostStatus.draft and post.client_id is None:
+        raise CustomAppError(
+            message="O post precisa ter um cliente destinatário para entrar em revisão",
             error_type=CustomErrorType.bad_request,
         )
 
@@ -423,6 +461,12 @@ async def delete_post(
         raise CustomAppError(
             message="Você não tem permissão para excluir este post",
             error_type=CustomErrorType.forbidden,
+        )
+
+    if post.status in (PostStatus.denied, PostStatus.published):
+        raise CustomAppError(
+            message="Posts negados ou publicados não podem ser excluídos",
+            error_type=CustomErrorType.bad_request,
         )
 
     await record_audit(
