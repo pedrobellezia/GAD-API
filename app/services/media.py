@@ -115,11 +115,25 @@ async def update_media_designer(
         )
 
     previous_designer_id = media.designer_id
+    previous_designer_user = (
+        await db.scalar(select(User).where(User.id == previous_designer_id))
+        if previous_designer_id is not None
+        else None
+    )
+    previous_designer_name = (
+        previous_designer_user.name
+        if previous_designer_user
+        else str(previous_designer_id)
+    )
+
+    designer = None
     if designer_data.designer_id is None:
         media.designer_id = None
     else:
         designer = await db.scalar(
-            select(Designer).where(
+            select(Designer)
+            .options(selectinload(Designer.user))
+            .where(
                 Designer.id == designer_data.designer_id,
                 Designer.agency_id == media.agency_id,
             )
@@ -131,18 +145,31 @@ async def update_media_designer(
             )
         media.designer_id = designer.id
 
-    await record_audit(
-        db,
-        user=user,
-        action="authorship_change",
-        resource_type="media",
-        resource_id=media.id,
-        resource_name=media.alias,
-        message=(
-            f"{user.name} alterou a autoria da mídia '{media.alias}' "
-            f"de '{previous_designer_id}' para '{media.designer_id}'."
-        ),
-    )
+    if media.designer_id != previous_designer_id:
+        if previous_designer_id is None and designer is not None:
+            message = (
+                f"{user.name} atribuiu a autoria da mídia '{media.alias}' "
+                f"ao designer '{designer.user.name}'."
+            )
+        elif previous_designer_id is not None and designer is None:
+            message = (
+                f"{user.name} removeu a autoria do designer '{previous_designer_name}' "
+                f"da mídia '{media.alias}'."
+            )
+        else:
+            message = (
+                f"{user.name} alterou a autoria da mídia '{media.alias}' "
+                f"de '{previous_designer_name}' para '{designer.user.name}'."
+            )
+        await record_audit(
+            db,
+            user=user,
+            action="authorship_change",
+            resource_type="media",
+            resource_id=media.id,
+            resource_name=media.alias,
+            message=message,
+        )
     await db.commit()
     return media
 
@@ -303,7 +330,22 @@ async def delete_media(
         )
 
     for post in posts:
-        post.status = PostStatus.draft
+        if post.status != PostStatus.draft:
+            previous_status = post.status
+            post.status = PostStatus.draft
+            await record_audit(
+                db,
+                user=user,
+                action="status_change",
+                resource_type="post",
+                resource_id=post.id,
+                resource_name=post.title,
+                agency_id=media.agency_id,
+                message=(
+                    f"{user.name} reverteu o status do post '{post.title}' "
+                    f"de '{previous_status}' para '{post.status}' ao excluir a mídia '{media.alias}'."
+                ),
+            )
 
     filename = media.filename
     await record_audit(

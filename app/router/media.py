@@ -73,15 +73,17 @@ async def route_get_medias(
 async def route_update_media_designer(
     media_id: UUID,
     designer_data: MediaDesignerUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user(UserType.agency)),
 ):
-    return await update_media_designer(
+    media = await update_media_designer(
         db=db,
         user=user,
         media_id=media_id,
         designer_data=designer_data,
     )
+    return media_read_response(media, request)
 
 
 @router.patch(
