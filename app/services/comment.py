@@ -9,27 +9,45 @@ from app.schemas import CommentCreate
 from app.services.audit_log import record_audit
 
 
-async def _get_post_for_comment(db: AsyncSession, post_id: UUID, user: User) -> Post:
+async def _get_post_or_404(db: AsyncSession, post_id: UUID) -> Post:
     post = await db.scalar(select(Post).where(Post.id == post_id))
     if not post:
         raise CustomAppError(
             message="Post não encontrado",
             error_type=CustomErrorType.not_found,
         )
-
-    authorized = (user.type == UserType.agency and post.agency_id == user.id) or (
-        user.type == UserType.client and post.client_id == user.id
-    )
-    if not authorized:
-        raise CustomAppError(
-            message="Apenas a agência responsável ou o cliente do post pode acessar os comentários",
-            error_type=CustomErrorType.forbidden,
-        )
     return post
 
 
+def _can_read_post_comments(post: Post, user: User) -> bool:
+    if user.type == UserType.agency:
+        return post.agency_id == user.id
+    if user.type == UserType.writer:
+        return bool(user.writer and post.agency_id == user.writer.agency_id)
+    if user.type == UserType.designer:
+        return bool(user.designer and post.agency_id == user.designer.agency_id)
+    if user.type == UserType.client:
+        return post.client_id == user.id
+    return False
+
+
+def _can_write_post_comment(post: Post, user: User) -> bool:
+    if user.type == UserType.agency:
+        return post.agency_id == user.id
+    if user.type == UserType.writer:
+        return post.writer_id == user.id
+    if user.type == UserType.client:
+        return post.client_id == user.id
+    return False
+
+
 async def get_comments(db: AsyncSession, post_id: UUID, user: User) -> list[Comment]:
-    await _get_post_for_comment(db, post_id, user)
+    post = await _get_post_or_404(db, post_id)
+    if not _can_read_post_comments(post, user):
+        raise CustomAppError(
+            message="Você não tem permissão para visualizar os comentários deste post",
+            error_type=CustomErrorType.forbidden,
+        )
     result = await db.scalars(
         select(Comment)
         .where(Comment.post_id == post_id)
@@ -44,7 +62,12 @@ async def create_comment(
     user: User,
     comment_data: CommentCreate,
 ) -> Comment:
-    post = await _get_post_for_comment(db, post_id, user)
+    post = await _get_post_or_404(db, post_id)
+    if not _can_write_post_comment(post, user):
+        raise CustomAppError(
+            message="Apenas a agência responsável, o redator autor ou o cliente do post podem comentar",
+            error_type=CustomErrorType.forbidden,
+        )
     comment = Comment(
         post_id=post.id,
         author_id=user.id,
@@ -58,7 +81,7 @@ async def create_comment(
         action="create",
         resource_type="comment",
         resource_id=comment.id,
-        resource_name=f"Comentário do post {post.id}",
+        resource_name=post.title,
         agency_id=post.agency_id,
         message=f"{user.name} comentou no post '{post.title}'.",
     )
@@ -79,10 +102,14 @@ async def delete_comment(
             error_type=CustomErrorType.not_found,
         )
 
-    post = await _get_post_for_comment(db, comment.post_id, user)
-    if user.type != UserType.agency or post.agency_id != user.id:
+    post = await _get_post_or_404(db, comment.post_id)
+    is_agency_owner = user.type == UserType.agency and post.agency_id == user.id
+    is_comment_author = comment.author_id == user.id and _can_write_post_comment(
+        post, user
+    )
+    if not (is_agency_owner or is_comment_author):
         raise CustomAppError(
-            message="Apenas a agência responsável pode remover comentários",
+            message="Apenas a agência responsável ou o autor do comentário podem removê-lo",
             error_type=CustomErrorType.forbidden,
         )
 
@@ -92,7 +119,7 @@ async def delete_comment(
         action="delete",
         resource_type="comment",
         resource_id=comment.id,
-        resource_name=f"Comentário do post {post.id}",
+        resource_name=post.title,
         agency_id=post.agency_id,
         message=f"{user.name} removeu um comentário do post '{post.title}'.",
     )
