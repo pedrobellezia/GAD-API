@@ -8,7 +8,6 @@ from app.schemas.user import UserCreate, UserRead
 
 
 class DesignerCreate(BaseModel):
-    agency_id: UUID | None = None
     kind: Literal["designer"]
     user: UserCreate
 

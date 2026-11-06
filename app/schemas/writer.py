@@ -10,7 +10,6 @@ from app.schemas.user import UserCreate, UserRead
 
 class WriterCreate(BaseModel):
     kind: Literal["writer"]
-    agency_id: UUID | None = None
     user: UserCreate
 
 

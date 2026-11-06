@@ -37,7 +37,7 @@ async def create_writer(db: AsyncSession, writer_data: WriterCreate) -> None:
     db.add(new_user)
     await db.flush()
 
-    new_writer = Writer(id=new_user.id, agency_id=writer_data.agency_id)
+    new_writer = Writer(id=new_user.id)
     db.add(new_writer)
 
 

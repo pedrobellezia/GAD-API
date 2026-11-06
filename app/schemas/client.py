@@ -9,7 +9,6 @@ from app.schemas.user import UserCreate, UserRead
 
 
 class ClientCreate(BaseModel):
-    agency_id: UUID | None = None
     kind: Literal["client"]
     user: UserCreate
 
