@@ -181,7 +181,6 @@ async def update_post(
     post_data: PostUpdate,
 ) -> Post:
     post = await get_post_by_id(db, post_id, user=user)
-    previous_title = post.title
 
     # RN-15: Apenas a agência responsável ou o redator autor podem manipular o post
     if user.type == UserType.writer and post.writer_id != user.id:
@@ -214,7 +213,11 @@ async def update_post(
             error_type=CustomErrorType.bad_request,
         )
 
+    previous_title = post.title
+    previous_content = post.content
+    previous_client_id = post.client_id
     previous_status = post.status
+    audit_events: list[tuple[str, str]] = []
 
     if "client_id" in post_data.model_fields_set:
         if user.type != UserType.agency:
@@ -223,11 +226,14 @@ async def update_post(
                 error_type=CustomErrorType.forbidden,
             )
 
+        new_client = None
         if post_data.client_id is not None:
-            client = await db.scalar(
-                select(Client).where(Client.id == post_data.client_id)
+            new_client = await db.scalar(
+                select(Client)
+                .options(selectinload(Client.user))
+                .where(Client.id == post_data.client_id)
             )
-            if not client or client.agency_id != post.agency_id:
+            if not new_client or new_client.agency_id != post.agency_id:
                 raise CustomAppError(
                     message="Cliente informado é inválido ou não pertence à agência",
                     error_type=CustomErrorType.bad_request,
@@ -239,17 +245,70 @@ async def update_post(
         ):
             post.status = PostStatus.draft
 
+        if post_data.client_id != previous_client_id:
+            previous_client_user = (
+                await db.scalar(select(User).where(User.id == previous_client_id))
+                if previous_client_id is not None
+                else None
+            )
+            previous_client_name = (
+                previous_client_user.name
+                if previous_client_user
+                else str(previous_client_id)
+            )
+            if previous_client_id is None and new_client is not None:
+                audit_events.append(
+                    (
+                        "recipient_change",
+                        f"{user.name} definiu o cliente '{new_client.user.name}' "
+                        f"como destinatário do post '{post.title}'.",
+                    )
+                )
+            elif previous_client_id is not None and new_client is None:
+                audit_events.append(
+                    (
+                        "recipient_change",
+                        f"{user.name} removeu o cliente '{previous_client_name}' "
+                        f"do post '{post.title}'.",
+                    )
+                )
+            elif new_client is not None:
+                audit_events.append(
+                    (
+                        "recipient_change",
+                        f"{user.name} alterou o cliente do post '{post.title}' "
+                        f"de '{previous_client_name}' para '{new_client.user.name}'.",
+                    )
+                )
+
     if post_data.title is not None:
         post.title = post_data.title
+        if post.title != previous_title:
+            audit_events.append(
+                (
+                    "title_change",
+                    f"{user.name} alterou o título do post de "
+                    f"'{previous_title}' para '{post.title}'.",
+                )
+            )
     if post_data.content is not None:
         post.content = post_data.content
+        if post.content != previous_content:
+            audit_events.append(
+                (
+                    "content_change",
+                    f"{user.name} alterou o conteúdo do post '{post.title}'.",
+                )
+            )
 
     if post_data.medias is not None:
-        # Remover mídias antigas do post
-        for existing_media in list(post.medias):
-            await db.delete(existing_media)
+        old_medias_list = list(post.medias)
+        old_aliases = {
+            pm.media_id: pm.media.alias for pm in old_medias_list if pm.media
+        }
+        old_positions = {pm.media_id: pm.position for pm in old_medias_list}
 
-        # Adicionar novas mídias validadas
+        validated_medias: list[tuple[Media, int]] = []
         for media_item in post_data.medias:
             media = await db.scalar(
                 select(Media).where(Media.id == media_item.media_id)
@@ -259,16 +318,68 @@ async def update_post(
                     message=f"Mídia {media_item.media_id} é inválida ou não pertence à agência",
                     error_type=CustomErrorType.bad_request,
                 )
+            validated_medias.append((media, media_item.position))
+
+        # Remover mídias antigas do post
+        for existing_media in old_medias_list:
+            await db.delete(existing_media)
+
+        # Adicionar novas mídias validadas
+        new_aliases: dict[UUID, str] = {}
+        new_positions: dict[UUID, int] = {}
+        for media, position in validated_medias:
+            new_aliases[media.id] = media.alias
+            new_positions[media.id] = position
             post_media = PostMedia(
                 post_id=post.id,
-                media_id=media_item.media_id,
-                position=media_item.position,
+                media_id=media.id,
+                position=position,
             )
             db.add(post_media)
+
+        for media_id, alias in old_aliases.items():
+            if media_id not in new_aliases:
+                audit_events.append(
+                    (
+                        "media_remove",
+                        f"{user.name} removeu a mídia '{alias}' do post '{post.title}'.",
+                    )
+                )
+
+        for media_id, alias in new_aliases.items():
+            if media_id not in old_aliases:
+                audit_events.append(
+                    (
+                        "media_add",
+                        f"{user.name} adicionou a mídia '{alias}' ao post '{post.title}'.",
+                    )
+                )
+
+        if (
+            set(old_aliases.keys()) == set(new_aliases.keys())
+            and old_positions != new_positions
+        ):
+            audit_events.append(
+                (
+                    "media_reorder",
+                    f"{user.name} reordenou as mídias do post '{post.title}'.",
+                )
+            )
 
         # RN-13 / RN-19: Draft é o único status em que o post pode permanecer sem mídia
         if not post_data.medias and post.status != PostStatus.draft:
             post.status = PostStatus.draft
+
+    for action_name, event_message in audit_events:
+        await record_audit(
+            db,
+            user=user,
+            action=action_name,
+            resource_type="post",
+            resource_id=post.id,
+            resource_name=post.title,
+            message=event_message,
+        )
 
     if post.status != previous_status:
         await record_audit(
@@ -284,19 +395,6 @@ async def update_post(
             ),
         )
 
-    await record_audit(
-        db,
-        user=user,
-        action="update",
-        resource_type="post",
-        resource_id=post.id,
-        resource_name=post.title,
-        message=(
-            f"{user.name} atualizou o post '{previous_title}' "
-            f"(título atual: '{post.title}', destinatário: "
-            f"'{post.client_id}')."
-        ),
-    )
     await db.commit()
     return await get_post_by_id(db, post.id)
 
@@ -407,11 +505,23 @@ async def update_post_writer(
             error_type=CustomErrorType.conflict,
         )
 
+    previous_writer_user = (
+        await db.scalar(select(User).where(User.id == previous_writer_id))
+        if previous_writer_id is not None
+        else None
+    )
+    previous_writer_name = (
+        previous_writer_user.name if previous_writer_user else str(previous_writer_id)
+    )
+
+    writer = None
     if writer_data.writer_id is None:
         post.writer_id = None
     else:
         writer = await db.scalar(
-            select(Writer).where(
+            select(Writer)
+            .options(selectinload(Writer.user))
+            .where(
                 Writer.id == writer_data.writer_id,
                 Writer.agency_id == post.agency_id,
             )
@@ -423,18 +533,31 @@ async def update_post_writer(
             )
         post.writer_id = writer.id
 
-    await record_audit(
-        db,
-        user=user,
-        action="authorship_change",
-        resource_type="post",
-        resource_id=post.id,
-        resource_name=post.title,
-        message=(
-            f"{user.name} alterou a autoria do post '{post.title}' "
-            f"de '{previous_writer_id}' para '{post.writer_id}'."
-        ),
-    )
+    if post.writer_id != previous_writer_id:
+        if previous_writer_id is None and writer is not None:
+            message = (
+                f"{user.name} atribuiu a autoria do post '{post.title}' "
+                f"ao redator '{writer.user.name}'."
+            )
+        elif previous_writer_id is not None and writer is None:
+            message = (
+                f"{user.name} removeu a autoria do redator '{previous_writer_name}' "
+                f"do post '{post.title}'."
+            )
+        else:
+            message = (
+                f"{user.name} alterou a autoria do post '{post.title}' "
+                f"de '{previous_writer_name}' para '{writer.user.name}'."
+            )
+        await record_audit(
+            db,
+            user=user,
+            action="authorship_change",
+            resource_type="post",
+            resource_id=post.id,
+            resource_name=post.title,
+            message=message,
+        )
     await db.commit()
     return await get_post_by_id(db, post.id)
 

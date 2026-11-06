@@ -49,6 +49,7 @@ async def get_audit_logs(
     user: User,
     action: str | None = None,
     resource_type: str | None = None,
+    resource_id: UUID | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> list[AuditLog]:
@@ -63,6 +64,8 @@ async def get_audit_logs(
         query = query.where(AuditLog.action == action)
     if resource_type:
         query = query.where(AuditLog.resource_type == resource_type)
+    if resource_id:
+        query = query.where(AuditLog.resource_id == resource_id)
 
     result = await db.scalars(
         query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit)
