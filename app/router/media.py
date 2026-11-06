@@ -165,6 +165,12 @@ async def route_upload_medias(
     member: Designer = Depends(get_current_profile(UserType.designer)),
     user: User = Depends(get_current_user(UserType.designer)),
 ):
+    if not member.agency_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas designers vinculados a uma agência podem enviar mídias",
+        )
+
     if len(aliases) != len(files):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
