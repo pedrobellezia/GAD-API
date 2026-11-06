@@ -25,6 +25,11 @@ class ChangePasswordPayload(BaseModel):
     new_password: NonEmptyStr
 
 
+class ProfileUpdatePayload(BaseModel):
+    name: NonEmptyStr | None = None
+    email: EmailStr | None = None
+
+
 class JwtPayload(BaseModel):
     sub: UUID
     exp: int
