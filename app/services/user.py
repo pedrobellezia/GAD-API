@@ -1,3 +1,4 @@
+import asyncio
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -9,6 +10,7 @@ from app.core import pswd_hasher
 from app.models import Agency, Client, Designer, User, UserType, Writer
 from app.schemas import UserCreate, UserFilter
 from app.services.audit_log import record_audit
+from app.services.media import detect_file_type, get_media_path, store_media_file
 
 
 async def get_users(db: AsyncSession, filters: UserFilter) -> list[User]:
@@ -91,3 +93,99 @@ async def deactivate_user(db: AsyncSession, user: User) -> None:
         message=f"{user.name} desativou a própria conta.",
     )
     await db.commit()
+
+
+async def update_profile(
+    db: AsyncSession, user: User, name: str | None, email: str | None
+):
+    if name is None and email is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Informe ao menos um campo para atualizar",
+        )
+
+    if email is not None and email != user.email:
+        existing = await db.scalar(select(User).where(User.email == email))
+        if existing and existing.id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="O email informado já está em uso",
+            )
+
+    previous_name = user.name
+    previous_email = user.email
+    if name is not None:
+        user.name = name
+    if email is not None:
+        user.email = email
+
+    await record_audit(
+        db,
+        user=user,
+        action="update",
+        resource_type="user",
+        resource_id=user.id,
+        resource_name=user.name,
+        message=(
+            f"{user.name} atualizou o perfil "
+            f"(nome: '{previous_name}' para '{user.name}', "
+            f"email: '{previous_email}' para '{user.email}')."
+        ),
+    )
+    await db.commit()
+    return user
+
+
+async def update_avatar(db: AsyncSession, user: User, file) -> None:
+    file_info = await detect_file_type(file)
+    if file_info.media_type.value != "image":
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="O avatar deve ser uma imagem JPEG ou PNG",
+        )
+
+    filename, _ = await store_media_file(file, file_info.extension)
+    previous_filename = user.avatar
+    user.avatar = filename
+    try:
+        await record_audit(
+            db,
+            user=user,
+            action="update",
+            resource_type="user",
+            resource_id=user.id,
+            resource_name=user.name,
+            message=f"{user.name} atualizou o avatar.",
+        )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        path = get_media_path(filename)
+        if path.exists():
+            await asyncio.to_thread(path.unlink)
+        raise
+
+    if previous_filename:
+        previous_path = get_media_path(previous_filename)
+        if previous_path.exists():
+            await asyncio.to_thread(previous_path.unlink)
+
+
+async def remove_avatar(db: AsyncSession, user: User) -> None:
+    previous_filename = user.avatar
+    if not previous_filename:
+        return
+    user.avatar = None
+    await record_audit(
+        db,
+        user=user,
+        action="delete",
+        resource_type="user",
+        resource_id=user.id,
+        resource_name=user.name,
+        message=f"{user.name} removeu o avatar.",
+    )
+    await db.commit()
+    path = get_media_path(previous_filename)
+    if path.exists():
+        await asyncio.to_thread(path.unlink)

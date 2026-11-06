@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -20,8 +20,12 @@ router = APIRouter()
 @router.post(
     path="/login", status_code=status.HTTP_200_OK, response_model=LoginResponse
 )
-async def route_login(login_payload: LoginPayload, db: AsyncSession = Depends(get_db)):
-    jwt_token = await login(db, login_payload)
+async def route_login(
+    login_payload: LoginPayload,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    jwt_token = await login(db, login_payload, request)
     return {"token": jwt_token}
 
 

@@ -5,9 +5,11 @@ from .auth import (
     JwtPayload,
     LoginPayload,
     LoginResponse,
+    ProfileUpdatePayload,
     RegisterPayload,
 )
 from .client import ClientCreate, ClientFilter, ClientRead, ClientReadNoAgency
+from .comment import CommentCreate, CommentRead
 from .common import DetailsResponse
 from .designer import (
     DesignerCreate,
@@ -69,4 +71,7 @@ __all__ = [
     "PostWriterUpdate",
     "PostFilter",
     "ChangePasswordPayload",
+    "ProfileUpdatePayload",
+    "CommentCreate",
+    "CommentRead",
 ]
