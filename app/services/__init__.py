@@ -10,8 +10,12 @@ from .auth import login, register
 from .client import create_client, get_clients
 from .comment import create_comment, delete_comment, get_comments
 from .designer import create_designer, get_designer_me
-from .invite_token import create_invite_tokens
-from .media import update_media_designer
+from .invite_token import (
+    create_invite_tokens,
+    delete_invite_token,
+    get_invite_tokens,
+)
+from .media import update_media_designer, upload_medias
 from .post import (
     create_post,
     delete_post,
@@ -63,7 +67,10 @@ __all__ = [
     "login",
     "register",
     "create_invite_tokens",
+    "delete_invite_token",
+    "get_invite_tokens",
     "update_media_designer",
+    "upload_medias",
     "get_profile",
     "get_posts",
     "get_post_by_id",
