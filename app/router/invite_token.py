@@ -1,16 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models import InviteToken, User, UserType
+from app.models import User, UserType
 from app.schemas import (
     DetailsResponse,
     InviteTokenBatchCreate,
     InviteTokenRead,
 )
-from app.services import create_invite_tokens
+from app.services import (
+    create_invite_tokens,
+    delete_invite_token,
+    get_invite_tokens,
+)
 
 router = APIRouter()
 
@@ -22,10 +25,7 @@ async def route_agency_invite_tokens(
     user: User = Depends(get_current_user(UserType.agency)),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.scalars(
-        select(InviteToken).where(InviteToken.agency_id == user.id)
-    )
-    return list(result.unique().all())
+    return await get_invite_tokens(db, agency_id=user.id)
 
 
 @router.post(
@@ -37,7 +37,6 @@ async def route_agency_create_invite_tokens(
     db: AsyncSession = Depends(get_db),
 ):
     await create_invite_tokens(db, agency_id=user.id, quantity=payload.quantity)
-    await db.commit()
     return {"details": f"{payload.quantity} tokens de convite criados com sucesso"}
 
 
@@ -51,18 +50,5 @@ async def route_agency_delete_invite_token(
     user: User = Depends(get_current_user(UserType.agency)),
     db: AsyncSession = Depends(get_db),
 ):
-    invite_token = await db.scalar(
-        select(InviteToken)
-        .where(InviteToken.token == token)
-        .where(InviteToken.agency_id == user.id)
-    )
-    if not invite_token:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Token de convite nao encontrado",
-        )
-
-    await db.delete(invite_token)
-
-    await db.commit()
+    await delete_invite_token(db, agency_id=user.id, token=token)
     return {"details": "Token de convite removido com sucesso"}

@@ -99,6 +99,91 @@ async def store_media_file(file: UploadFile, extension: str):
             await asyncio.to_thread(full_path.unlink)
 
 
+async def upload_medias(
+    db: AsyncSession,
+    *,
+    user: User,
+    member: Designer,
+    files: list[UploadFile],
+    aliases: list[str],
+) -> list[dict] | None:
+    if not member.agency_id:
+        raise CustomAppError(
+            message="Apenas designers vinculados a uma agência podem enviar mídias",
+            error_type=CustomErrorType.forbidden,
+        )
+
+    if len(aliases) != len(files):
+        raise CustomAppError(
+            message="O número de aliases deve ser igual ao número de arquivos",
+            error_type=CustomErrorType.bad_request,
+        )
+
+    medias: list[Media] = []
+    filename_list: list[str] = []
+    file_errors: list[dict] = []
+
+    try:
+        for alias, file in zip(aliases, files, strict=True):
+            try:
+                file_info = await validate_media_file(file)
+
+                filename, size_bytes = await store_media_file(
+                    file=file,
+                    extension=file_info.extension,
+                )
+                filename_list.append(filename)
+
+                medias.append(
+                    Media(
+                        alias=alias,
+                        filename=filename,
+                        media_type=file_info.media_type,
+                        mime_type=file_info.mime_type,
+                        size_bytes=size_bytes,
+                        designer_id=member.id,
+                        agency_id=member.agency_id,
+                    )
+                )
+            except CustomAppError as exc:
+                file_errors.append(
+                    {
+                        "alias": alias,
+                        "error_type": exc.error_type.name,
+                        "message": exc.message,
+                    }
+                )
+
+        if medias:
+            db.add_all(medias)
+            for media in medias:
+                await record_audit(
+                    db,
+                    user=user,
+                    action="create",
+                    resource_type="media",
+                    resource_id=media.id,
+                    resource_name=media.alias,
+                    message=f"{user.name} enviou a mídia '{media.alias}'.",
+                    agency_id=member.agency_id,
+                )
+
+        await db.commit()
+        return file_errors or None
+
+    except Exception:
+        await db.rollback()
+        for q in filename_list:
+            file_path = LOCAL_STORAGE_PATH / q
+            if file_path.exists():
+                await asyncio.to_thread(file_path.unlink)
+
+        raise
+    finally:
+        for file in files:
+            await file.close()
+
+
 async def update_media_designer(
     db: AsyncSession,
     user: User,
