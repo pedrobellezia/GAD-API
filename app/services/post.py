@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -18,11 +19,51 @@ from app.models import (
 from app.schemas import (
     PostCreate,
     PostFilter,
+    PostMediaCreate,
     PostStatusUpdate,
     PostUpdate,
     PostWriterUpdate,
 )
 from app.services.audit_log import record_audit
+
+
+async def _validate_post_medias(
+    db: AsyncSession,
+    agency_id: UUID | None,
+    media_items: list[PostMediaCreate],
+) -> list[tuple[Media, int]]:
+    seen_media_ids: set[UUID] = set()
+    seen_positions: set[int] = set()
+    validated: list[tuple[Media, int]] = []
+
+    for media_item in media_items:
+        if media_item.position < 0:
+            raise CustomAppError(
+                message="A posição da mídia deve ser maior ou igual a zero",
+                error_type=CustomErrorType.bad_request,
+            )
+        if media_item.media_id in seen_media_ids:
+            raise CustomAppError(
+                message="Não é permitido repetir a mesma mídia no post",
+                error_type=CustomErrorType.bad_request,
+            )
+        if media_item.position in seen_positions:
+            raise CustomAppError(
+                message="Não é permitido repetir a mesma posição de mídia no post",
+                error_type=CustomErrorType.bad_request,
+            )
+        seen_media_ids.add(media_item.media_id)
+        seen_positions.add(media_item.position)
+
+        media = await db.scalar(select(Media).where(Media.id == media_item.media_id))
+        if not media or media.agency_id != agency_id:
+            raise CustomAppError(
+                message=f"Mídia {media_item.media_id} é inválida ou não pertence à agência",
+                error_type=CustomErrorType.bad_request,
+            )
+        validated.append((media, media_item.position))
+
+    return validated
 
 
 async def get_posts(
@@ -142,21 +183,13 @@ async def create_post(
     await db.flush()
 
     if post_data.medias:
-        # RN-10: Verificar se as mídias existem e pertencem à agência
-        for media_item in post_data.medias:
-            media = await db.scalar(
-                select(Media).where(Media.id == media_item.media_id)
-            )
-            if not media or media.agency_id != agency_id:
-                raise CustomAppError(
-                    message=f"Mídia {media_item.media_id} é inválida ou não pertence à agência",
-                    error_type=CustomErrorType.bad_request,
-                )
-
+        # RN-10: Verificar se as mídias existem, pertencem à agência e não possuem duplicatas
+        validated_medias = await _validate_post_medias(db, agency_id, post_data.medias)
+        for media, position in validated_medias:
             post_media = PostMedia(
                 post_id=new_post.id,
-                media_id=media_item.media_id,
-                position=media_item.position,
+                media_id=media.id,
+                position=position,
             )
             db.add(post_media)
 
@@ -308,21 +341,14 @@ async def update_post(
         }
         old_positions = {pm.media_id: pm.position for pm in old_medias_list}
 
-        validated_medias: list[tuple[Media, int]] = []
-        for media_item in post_data.medias:
-            media = await db.scalar(
-                select(Media).where(Media.id == media_item.media_id)
-            )
-            if not media or media.agency_id != post.agency_id:
-                raise CustomAppError(
-                    message=f"Mídia {media_item.media_id} é inválida ou não pertence à agência",
-                    error_type=CustomErrorType.bad_request,
-                )
-            validated_medias.append((media, media_item.position))
+        validated_medias = await _validate_post_medias(
+            db, post.agency_id, post_data.medias
+        )
 
-        # Remover mídias antigas do post
+        # Remover mídias antigas do post e efetivar DELETE antes de inserir as novas
         for existing_media in old_medias_list:
             await db.delete(existing_media)
+        await db.flush()
 
         # Adicionar novas mídias validadas
         new_aliases: dict[UUID, str] = {}
@@ -336,6 +362,9 @@ async def update_post(
                 position=position,
             )
             db.add(post_media)
+
+        if old_positions != new_positions:
+            post.updated_at = datetime.now(UTC)
 
         for media_id, alias in old_aliases.items():
             if media_id not in new_aliases:
