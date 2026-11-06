@@ -107,7 +107,12 @@ async def route_agency_member_unlink(
 )
 async def route_get_clients(
     user: User = Depends(
-        get_current_user(UserType.writer, UserType.agency, UserType.designer)
+        get_current_user(
+            UserType.agency,
+            UserType.client,
+            UserType.writer,
+            UserType.designer,
+        )
     ),
     db: AsyncSession = Depends(get_db),
 ):
@@ -124,7 +129,12 @@ async def route_get_clients(
 )
 async def route_get_writers(
     user: User = Depends(
-        get_current_user(UserType.client, UserType.agency, UserType.designer)
+        get_current_user(
+            UserType.agency,
+            UserType.client,
+            UserType.writer,
+            UserType.designer,
+        )
     ),
     db: AsyncSession = Depends(get_db),
 ):
@@ -141,7 +151,12 @@ async def route_get_writers(
 )
 async def route_get_designers(
     user: User = Depends(
-        get_current_user(UserType.client, UserType.agency, UserType.writer)
+        get_current_user(
+            UserType.agency,
+            UserType.client,
+            UserType.writer,
+            UserType.designer,
+        )
     ),
     db: AsyncSession = Depends(get_db),
 ):
