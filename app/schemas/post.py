@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import Post, PostStatus
+from app.schemas.comment import CommentRead
 from app.schemas.postmedia import PostMediaCreate, PostMediaRead
 from app.utils.types import NonEmptyStr
 
@@ -44,6 +45,7 @@ class PostRead(BaseModel):
     client_id: UUID | None = None
     writer_id: UUID | None = None
     medias: list[PostMediaRead] = []
+    comments: list[CommentRead] = []
     created_at: datetime
     updated_at: datetime
 

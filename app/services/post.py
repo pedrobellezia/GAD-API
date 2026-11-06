@@ -32,6 +32,7 @@ async def get_posts(
 ) -> list[Post]:
     query = select(Post).options(
         selectinload(Post.medias).selectinload(PostMedia.media),
+        selectinload(Post.comments),
     )
 
     # Permissões de Visibilidade (RN-16, RN-17)
@@ -69,6 +70,7 @@ async def get_post_by_id(
         select(Post)
         .options(
             selectinload(Post.medias).selectinload(PostMedia.media),
+            selectinload(Post.comments),
         )
         .where(Post.id == post_id)
     )

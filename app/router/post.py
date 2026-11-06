@@ -7,6 +7,8 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models import User, UserType
 from app.schemas import (
+    CommentCreate,
+    CommentRead,
     DetailsResponse,
     PostCreate,
     PostFilter,
@@ -16,8 +18,61 @@ from app.schemas import (
     PostWriterUpdate,
 )
 from app.services import post as post_service
+from app.services.comment import create_comment, delete_comment, get_comments
 
 router = APIRouter()
+
+
+@router.get(
+    "/{post_id}/comments",
+    status_code=status.HTTP_200_OK,
+    response_model=list[CommentRead],
+)
+async def get_post_comments_route(
+    post_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user()),
+):
+    return await get_comments(db=db, post_id=post_id, user=user)
+
+
+@router.post(
+    "/{post_id}/comments",
+    status_code=status.HTTP_201_CREATED,
+    response_model=CommentRead,
+)
+async def create_post_comment_route(
+    post_id: UUID,
+    comment_data: CommentCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user()),
+):
+    return await create_comment(
+        db=db,
+        post_id=post_id,
+        user=user,
+        comment_data=comment_data,
+    )
+
+
+@router.delete(
+    "/{post_id}/comments/{comment_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=DetailsResponse,
+)
+async def delete_post_comment_route(
+    post_id: UUID,
+    comment_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user()),
+):
+    await delete_comment(
+        db=db,
+        post_id=post_id,
+        comment_id=comment_id,
+        user=user,
+    )
+    return {"details": "Comentário removido com sucesso"}
 
 
 @router.post(

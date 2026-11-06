@@ -8,6 +8,7 @@ from .agency import (
 from .audit_log import get_audit_logs, record_audit
 from .auth import login, register
 from .client import create_client, get_clients
+from .comment import create_comment, delete_comment, get_comments
 from .designer import create_designer, get_designer_me
 from .invite_token import create_invite_tokens
 from .media import update_media_designer
@@ -32,7 +33,10 @@ from .user import (
     get_profile,
     get_users,
     load_user,
+    remove_avatar,
     resolve_profile,
+    update_avatar,
+    update_profile,
 )
 from .writer import create_writer, get_writers
 
@@ -46,6 +50,9 @@ __all__ = [
     "get_my_designers",
     "create_client",
     "get_clients",
+    "get_comments",
+    "create_comment",
+    "delete_comment",
     "create_designer",
     "get_designer_me",
     "create_user",
@@ -71,4 +78,7 @@ __all__ = [
     "update_media_position",
     "load_user",
     "resolve_profile",
+    "update_profile",
+    "update_avatar",
+    "remove_avatar",
 ]
