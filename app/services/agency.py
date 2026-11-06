@@ -116,6 +116,7 @@ async def unlink_member(
     *,
     actor: User,
     requesting_agency_id=None,
+    commit: bool = True,
 ) -> None:
     is_self_unlink = requesting_agency_id is None
 
@@ -235,7 +236,8 @@ async def unlink_member(
         agency_id=agency_id,
         message=f"{actor.name} desvinculou {member_name} da agência.",
     )
-    await db.commit()
+    if commit:
+        await db.commit()
 
 
 async def get_member_agency(db: AsyncSession, member) -> Agency:

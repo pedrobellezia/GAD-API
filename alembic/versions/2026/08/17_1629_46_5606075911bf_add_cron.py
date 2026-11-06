@@ -24,7 +24,7 @@ def upgrade() -> None:
             $cron$
             DELETE FROM users
             WHERE deleted_at IS NOT NULL
-              AND deleted_at < NOW() - INTERVAL '1 month';
+              AND deleted_at < NOW() - INTERVAL '30 days';
             $cron$
         );
     """)
