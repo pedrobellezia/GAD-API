@@ -72,6 +72,12 @@ async def deactivate_user(db: AsyncSession, user: User) -> None:
 
     profile = await resolve_profile(user)
     agency_id = profile.agency_id if profile else None
+
+    if profile and agency_id:
+        from app.services.agency import unlink_member
+
+        await unlink_member(db=db, member=profile, actor=user, commit=False)
+
     user.deleted_at = datetime.now(UTC)
 
     await record_audit(

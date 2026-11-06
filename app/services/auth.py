@@ -40,8 +40,11 @@ async def login(db: AsyncSession, payload: LoginPayload) -> str:
 
     if result.deleted_at is not None:
         if payload.restore:
-            result.deleted_at = None
-            await db.flush()
+            await db.execute(
+                text("SELECT restore_user(:email)"),
+                {"email": payload.email},
+            )
+            await db.refresh(result)
             await db.refresh(result, [result.type.value])
             await record_audit(
                 db,
