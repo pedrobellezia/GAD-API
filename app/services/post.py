@@ -117,6 +117,7 @@ async def get_post_by_id(
             selectinload(Post.comments),
         )
         .where(Post.id == post_id)
+        .execution_options(populate_existing=True)
     )
 
     if not post:
@@ -255,8 +256,13 @@ async def update_post(
     previous_content = post.content
     previous_client_id = post.client_id
     previous_status = post.status
+    target_title = (
+        post_data.title if post_data.title is not None else previous_title
+    )
     audit_events: list[tuple[str, str]] = []
 
+    new_client = None
+    previous_client_name: str | None = None
     if "client_id" in post_data.model_fields_set:
         if user.type != UserType.agency:
             raise CustomAppError(
@@ -264,7 +270,6 @@ async def update_post(
                 error_type=CustomErrorType.forbidden,
             )
 
-        new_client = None
         if post_data.client_id is not None:
             new_client = await db.scalar(
                 select(Client)
@@ -276,28 +281,59 @@ async def update_post(
                     message="Cliente informado é inválido ou não pertence à agência",
                     error_type=CustomErrorType.bad_request,
                 )
-        post.client_id = post_data.client_id
-        if post.client_id is None and post.status in (
-            PostStatus.review,
-            PostStatus.approved,
-        ):
-            post.status = PostStatus.draft
 
+        if post_data.client_id != previous_client_id and previous_client_id is not None:
+            previous_client_user = await db.scalar(
+                select(User).where(User.id == previous_client_id)
+            )
+            previous_client_name = (
+                previous_client_user.name
+                if previous_client_user
+                else str(previous_client_id)
+            )
+
+    medias_changed = False
+    if post_data.medias is not None:
+        old_medias_list = list(post.medias)
+        old_aliases = {
+            pm.media_id: pm.media.alias for pm in old_medias_list if pm.media
+        }
+        old_positions = {pm.media_id: pm.position for pm in old_medias_list}
+
+        validated_medias = await _validate_post_medias(
+            db, post.agency_id, post_data.medias
+        )
+        new_aliases: dict[UUID, str] = {
+            media.id: media.alias for media, _ in validated_medias
+        }
+        new_positions: dict[UUID, int] = {
+            media.id: position for media, position in validated_medias
+        }
+        medias_changed = old_positions != new_positions
+
+        if medias_changed:
+            # Remover mídias antigas do post e efetivar DELETE antes de inserir as novas
+            for existing_media in old_medias_list:
+                await db.delete(existing_media)
+            await db.flush()
+
+            for media, position in validated_medias:
+                post_media = PostMedia(
+                    post_id=post.id,
+                    media_id=media.id,
+                    position=position,
+                )
+                db.add(post_media)
+
+    if "client_id" in post_data.model_fields_set:
+        post.client_id = post_data.client_id
         if post_data.client_id != previous_client_id:
             if previous_client_id is not None:
-                previous_client_user = await db.scalar(
-                    select(User).where(User.id == previous_client_id)
-                )
-                previous_client_name = (
-                    previous_client_user.name
-                    if previous_client_user
-                    else str(previous_client_id)
-                )
                 audit_events.append(
                     (
                         "recipient_remove",
                         f"{user.name} retirou o cliente '{previous_client_name}' "
-                        f"do post '{post.title}'.",
+                        f"do post '{target_title}'.",
                     )
                 )
             if new_client is not None:
@@ -305,7 +341,7 @@ async def update_post(
                     (
                         "recipient_add",
                         f"{user.name} adicionou o cliente '{new_client.user.name}' "
-                        f"no post '{post.title}'.",
+                        f"no post '{target_title}'.",
                     )
                 )
 
@@ -330,35 +366,7 @@ async def update_post(
             )
 
     if post_data.medias is not None:
-        old_medias_list = list(post.medias)
-        old_aliases = {
-            pm.media_id: pm.media.alias for pm in old_medias_list if pm.media
-        }
-        old_positions = {pm.media_id: pm.position for pm in old_medias_list}
-
-        validated_medias = await _validate_post_medias(
-            db, post.agency_id, post_data.medias
-        )
-
-        # Remover mídias antigas do post e efetivar DELETE antes de inserir as novas
-        for existing_media in old_medias_list:
-            await db.delete(existing_media)
-        await db.flush()
-
-        # Adicionar novas mídias validadas
-        new_aliases: dict[UUID, str] = {}
-        new_positions: dict[UUID, int] = {}
-        for media, position in validated_medias:
-            new_aliases[media.id] = media.alias
-            new_positions[media.id] = position
-            post_media = PostMedia(
-                post_id=post.id,
-                media_id=media.id,
-                position=position,
-            )
-            db.add(post_media)
-
-        if old_positions != new_positions:
+        if medias_changed:
             post.updated_at = datetime.now(UTC)
 
         for media_id, alias in old_aliases.items():
@@ -390,9 +398,16 @@ async def update_post(
                 )
             )
 
-        # RN-13 / RN-19: Draft é o único status em que o post pode permanecer sem mídia
-        if not post_data.medias and post.status != PostStatus.draft:
+    removed_client = (
+        "client_id" in post_data.model_fields_set and post_data.client_id is None
+    )
+    removed_all_medias = post_data.medias is not None and not post_data.medias
+
+    if removed_client or removed_all_medias:
+        if post.status in (PostStatus.review, PostStatus.approved):
             post.status = PostStatus.draft
+    elif previous_status == PostStatus.approved and audit_events:
+        post.status = PostStatus.review
 
     for action_name, event_message in audit_events:
         await record_audit(
@@ -420,6 +435,7 @@ async def update_post(
         )
 
     await db.commit()
+    await db.refresh(post, ["medias", "comments"])
     return await get_post_by_id(db, post.id)
 
 

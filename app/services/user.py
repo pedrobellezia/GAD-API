@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import set_committed_value
 
 from app.core import pswd_hasher
 from app.models import Agency, Client, Designer, User, UserType, Writer
@@ -35,6 +36,9 @@ async def load_user(db: AsyncSession, user_id: UUID) -> User | None:
     user = await db.scalar(select(User).where(User.id == user_id))
     if user:
         await db.refresh(user, [user.type.value])
+        profile = getattr(user, user.type.value, None)
+        if profile is not None:
+            set_committed_value(profile, "user", user)
     return user
 
 
@@ -124,31 +128,31 @@ async def update_profile(
     if email is not None:
         user.email = email
 
-    if user.name != previous_name:
-        await record_audit(
-            db,
-            user=user,
-            action="update",
-            resource_type="user",
-            resource_id=user.id,
-            resource_name=user.name,
-            message=(
-                f"{user.name} alterou o nome de '{previous_name}' para '{user.name}'."
-            ),
-        )
-    if user.email != previous_email:
-        await record_audit(
-            db,
-            user=user,
-            action="update",
-            resource_type="user",
-            resource_id=user.id,
-            resource_name=user.name,
-            message=(
-                f"{user.name} alterou o email de '{previous_email}' para '{user.email}'."
-            ),
-        )
     try:
+        if user.name != previous_name:
+            await record_audit(
+                db,
+                user=user,
+                action="update",
+                resource_type="user",
+                resource_id=user.id,
+                resource_name=user.name,
+                message=(
+                    f"{user.name} alterou o nome de '{previous_name}' para '{user.name}'."
+                ),
+            )
+        if user.email != previous_email:
+            await record_audit(
+                db,
+                user=user,
+                action="update",
+                resource_type="user",
+                resource_id=user.id,
+                resource_name=user.name,
+                message=(
+                    f"{user.name} alterou o email de '{previous_email}' para '{user.email}'."
+                ),
+            )
         await db.commit()
     except IntegrityError as err:
         await db.rollback()
