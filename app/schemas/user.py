@@ -5,12 +5,12 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models import User, UserType
-from app.utils.types import NonEmptyStr
+from app.utils.types import NonEmptyStr, NormalizedEmail
 
 
 class UserCreate(BaseModel):
     name: NonEmptyStr
-    email: EmailStr
+    email: NormalizedEmail
     avatar: NonEmptyStr | None = None
     pswd: NonEmptyStr
 
@@ -29,7 +29,7 @@ class UserRead(BaseModel):
 class UserFilter(BaseModel):
     id: UUID | None = None
     name: str | None = None
-    email: EmailStr | None = None
+    email: NormalizedEmail | None = None
     type: UserType | None = None
     order_by: Literal["new", "old"] = "new"
     skip: Annotated[int, Field(ge=0)] = 0

@@ -1,17 +1,17 @@
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 from app.schemas.agency import AgencyCreate
 from app.schemas.client import ClientCreate
 from app.schemas.designer import DesignerCreate
 from app.schemas.writer import WriterCreate
-from app.utils.types import NonEmptyStr
+from app.utils.types import NonEmptyStr, NormalizedEmail
 
 
 class LoginPayload(BaseModel):
-    email: EmailStr
+    email: NormalizedEmail
     pswd: NonEmptyStr
     restore: bool = False
 
@@ -27,7 +27,7 @@ class ChangePasswordPayload(BaseModel):
 
 class ProfileUpdatePayload(BaseModel):
     name: NonEmptyStr | None = None
-    email: EmailStr | None = None
+    email: NormalizedEmail | None = None
 
 
 class JwtPayload(BaseModel):

@@ -130,6 +130,12 @@ async def unlink_member(
 ) -> None:
     is_self_unlink = requesting_agency_id is None
 
+    if isinstance(member, Agency):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Não é possível desvincular uma agência",
+        )
+
     if not member.agency_id:
         if is_self_unlink:
             raise HTTPException(
@@ -215,8 +221,16 @@ async def unlink_member(
         )
         for post in posts:
             previous_status = post.status
-            if post.status != PostStatus.published:
+            removed_client = post.status != PostStatus.published
+            changed_status = previous_status in (
+                PostStatus.review,
+                PostStatus.approved,
+            )
+            if removed_client:
                 post.client_id = None
+            if changed_status:
+                post.status = PostStatus.draft
+            if removed_client:
                 await record_audit(
                     db,
                     user=actor,
@@ -230,8 +244,7 @@ async def unlink_member(
                         f"do post '{post.title}'."
                     ),
                 )
-            if post.status in (PostStatus.review, PostStatus.approved):
-                post.status = PostStatus.draft
+            if changed_status:
                 await record_audit(
                     db,
                     user=actor,

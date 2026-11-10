@@ -1,16 +1,16 @@
 import asyncio
-from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import pswd_hasher
 from app.models import Agency, Client, Designer, User, UserType, Writer
 from app.schemas import UserCreate, UserFilter
 from app.services.audit_log import record_audit
-from app.services.media import detect_file_type, get_media_path, store_media_file
+from app.services.media import get_media_path, store_media_file, validate_media_file
 
 
 async def get_users(db: AsyncSession, filters: UserFilter) -> list[User]:
@@ -80,8 +80,6 @@ async def deactivate_user(db: AsyncSession, user: User) -> None:
 
         await unlink_member(db=db, member=profile, actor=user, commit=False)
 
-    user.deleted_at = datetime.now(UTC)
-
     await record_audit(
         db,
         user=user,
@@ -91,6 +89,10 @@ async def deactivate_user(db: AsyncSession, user: User) -> None:
         resource_name=user.name,
         agency_id=agency_id,
         message=f"{user.name} desativou a própria conta.",
+    )
+    await db.execute(
+        text("SELECT soft_delete_user(:user_id)"),
+        {"user_id": user.id},
     )
     await db.commit()
 
@@ -103,6 +105,9 @@ async def update_profile(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Informe ao menos um campo para atualizar",
         )
+
+    if email is not None:
+        email = email.strip().lower()
 
     if email is not None and email != user.email:
         existing = await db.scalar(select(User).where(User.email == email))
@@ -143,12 +148,19 @@ async def update_profile(
                 f"{user.name} alterou o email de '{previous_email}' para '{user.email}'."
             ),
         )
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as err:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="O email informado já está em uso",
+        ) from err
     return user
 
 
 async def update_avatar(db: AsyncSession, user: User, file) -> None:
-    file_info = await detect_file_type(file)
+    file_info = await validate_media_file(file)
     if file_info.media_type.value != "image":
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
