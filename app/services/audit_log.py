@@ -62,7 +62,10 @@ async def get_audit_logs(
     if user.type in (UserType.writer, UserType.designer):
         query = query.where(AuditLog.resource_type.in_(("post", "media", "comment")))
     elif user.type == UserType.client:
-        client_post_ids = select(Post.id).where(Post.client_id == user.id)
+        client_post_ids = select(Post.id).where(
+            Post.client_id == user.id,
+            Post.status != PostStatus.draft,
+        )
         client_media_ids = (
             select(PostMedia.media_id)
             .join(PostMedia.post)

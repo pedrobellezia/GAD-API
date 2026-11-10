@@ -91,7 +91,10 @@ async def get_posts(
         query = query.where(Post.agency_id == user.designer.agency_id)
 
     elif user.type == UserType.client:
-        query = query.where(Post.client_id == user.id)
+        query = query.where(
+            Post.client_id == user.id,
+            Post.status != PostStatus.draft,
+        )
 
     else:
         return []
@@ -141,7 +144,9 @@ async def get_post_by_id(
                     message="Post não encontrado",
                     error_type=CustomErrorType.not_found,
                 )
-        elif user.type == UserType.client and post.client_id != user.id:
+        elif user.type == UserType.client and (
+            post.client_id != user.id or post.status == PostStatus.draft
+        ):
             raise CustomAppError(
                 message="Post não encontrado",
                 error_type=CustomErrorType.not_found,
@@ -522,6 +527,12 @@ async def update_post_writer(
         raise CustomAppError(
             message="O post foi modificado por outro usuário. Recarregue e tente novamente.",
             error_type=CustomErrorType.conflict,
+        )
+
+    if post.status in (PostStatus.denied, PostStatus.published):
+        raise CustomAppError(
+            message="Posts negados ou publicados não podem ser alterados",
+            error_type=CustomErrorType.bad_request,
         )
 
     previous_writer_user = (

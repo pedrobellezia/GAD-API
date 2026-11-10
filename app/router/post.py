@@ -1,6 +1,7 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -117,7 +118,7 @@ async def create_post_route(
 )
 async def get_posts_route(
     request: Request,
-    filters: PostFilter = Depends(),
+    filters: Annotated[PostFilter, Query()],
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user()),
 ):
