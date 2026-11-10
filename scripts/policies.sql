@@ -22,14 +22,15 @@ ALTER TABLE users
 
 CREATE POLICY hide_soft_deleted_users
     ON users
-    AS RESTRICTIVE
+    AS PERMISSIVE
     FOR ALL
     USING (
     users.deleted_at is NULL
-    );
+    )
+    WITH CHECK (true);
 CREATE POLICY hide_soft_deleted_clients
     ON clients
-    AS RESTRICTIVE
+    AS PERMISSIVE
     FOR ALL
     USING (
     EXISTS (SELECT 1
@@ -39,7 +40,7 @@ CREATE POLICY hide_soft_deleted_clients
     );
 CREATE POLICY hide_soft_deleted_writers
     ON writers
-    AS RESTRICTIVE
+    AS PERMISSIVE
     FOR ALL
     USING (
     EXISTS (SELECT 1
@@ -49,7 +50,7 @@ CREATE POLICY hide_soft_deleted_writers
     );
 CREATE POLICY hide_soft_deleted_agencies
     ON agencies
-    AS RESTRICTIVE
+    AS PERMISSIVE
     FOR ALL
     USING (
     EXISTS (SELECT 1
@@ -59,7 +60,7 @@ CREATE POLICY hide_soft_deleted_agencies
     );
 CREATE POLICY hide_soft_deleted_designers
     ON designers
-    AS RESTRICTIVE
+    AS PERMISSIVE
     FOR ALL
     USING (
     EXISTS (SELECT 1

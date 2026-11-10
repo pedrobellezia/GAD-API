@@ -69,8 +69,43 @@ def upgrade() -> None:
         TO dml_role;
     """)
 
+    op.execute("""
+        CREATE OR REPLACE FUNCTION soft_delete_user(p_user_id UUID)
+        RETURNS VOID
+        LANGUAGE sql
+        SECURITY DEFINER
+        SET search_path = public
+        AS $$
+            UPDATE users
+            SET deleted_at = NOW(),
+                updated_at = NOW()
+            WHERE id = p_user_id;
+        $$;
+    """)
+
+    op.execute("""
+        REVOKE ALL
+        ON FUNCTION soft_delete_user(UUID)
+        FROM PUBLIC;
+    """)
+
+    op.execute("""
+        GRANT EXECUTE
+        ON FUNCTION soft_delete_user(UUID)
+        TO dml_role;
+    """)
+
 
 def downgrade() -> None:
+    op.execute("""
+        REVOKE ALL
+        ON FUNCTION soft_delete_user(UUID)
+        FROM PUBLIC;
+    """)
+
+    op.execute("""
+        DROP FUNCTION IF EXISTS soft_delete_user(UUID);
+    """)
     op.execute("""
         REVOKE ALL
         ON FUNCTION restore_user(TEXT)
