@@ -279,38 +279,28 @@ async def update_post(
             post.status = PostStatus.draft
 
         if post_data.client_id != previous_client_id:
-            previous_client_user = (
-                await db.scalar(select(User).where(User.id == previous_client_id))
-                if previous_client_id is not None
-                else None
-            )
-            previous_client_name = (
-                previous_client_user.name
-                if previous_client_user
-                else str(previous_client_id)
-            )
-            if previous_client_id is None and new_client is not None:
-                audit_events.append(
-                    (
-                        "recipient_change",
-                        f"{user.name} definiu o cliente '{new_client.user.name}' "
-                        f"como destinatário do post '{post.title}'.",
-                    )
+            if previous_client_id is not None:
+                previous_client_user = await db.scalar(
+                    select(User).where(User.id == previous_client_id)
                 )
-            elif previous_client_id is not None and new_client is None:
+                previous_client_name = (
+                    previous_client_user.name
+                    if previous_client_user
+                    else str(previous_client_id)
+                )
                 audit_events.append(
                     (
-                        "recipient_change",
-                        f"{user.name} removeu o cliente '{previous_client_name}' "
+                        "recipient_remove",
+                        f"{user.name} retirou o cliente '{previous_client_name}' "
                         f"do post '{post.title}'.",
                     )
                 )
-            elif new_client is not None:
+            if new_client is not None:
                 audit_events.append(
                     (
-                        "recipient_change",
-                        f"{user.name} alterou o cliente do post '{post.title}' "
-                        f"de '{previous_client_name}' para '{new_client.user.name}'.",
+                        "recipient_add",
+                        f"{user.name} adicionou o cliente '{new_client.user.name}' "
+                        f"no post '{post.title}'.",
                     )
                 )
 
@@ -371,7 +361,7 @@ async def update_post(
                 audit_events.append(
                     (
                         "media_remove",
-                        f"{user.name} removeu a mídia '{alias}' do post '{post.title}'.",
+                        f"{user.name} retirou a mídia '{alias}' do post '{post.title}'.",
                     )
                 )
 
@@ -380,7 +370,7 @@ async def update_post(
                 audit_events.append(
                     (
                         "media_add",
-                        f"{user.name} adicionou a mídia '{alias}' ao post '{post.title}'.",
+                        f"{user.name} incluiu a mídia '{alias}' no post '{post.title}'.",
                     )
                 )
 
@@ -419,7 +409,7 @@ async def update_post(
             resource_id=post.id,
             resource_name=post.title,
             message=(
-                f"{user.name} reverteu o status do post '{post.title}' "
+                f"{user.name} alterou o status do post '{post.title}' "
                 f"de '{previous_status}' para '{post.status}'."
             ),
         )
@@ -563,30 +553,32 @@ async def update_post_writer(
         post.writer_id = writer.id
 
     if post.writer_id != previous_writer_id:
-        if previous_writer_id is None and writer is not None:
-            message = (
-                f"{user.name} atribuiu a autoria do post '{post.title}' "
-                f"ao redator '{writer.user.name}'."
+        if previous_writer_id is not None:
+            await record_audit(
+                db,
+                user=user,
+                action="author_remove",
+                resource_type="post",
+                resource_id=post.id,
+                resource_name=post.title,
+                message=(
+                    f"{user.name} retirou a autoria do redator '{previous_writer_name}' "
+                    f"do post '{post.title}'."
+                ),
             )
-        elif previous_writer_id is not None and writer is None:
-            message = (
-                f"{user.name} removeu a autoria do redator '{previous_writer_name}' "
-                f"do post '{post.title}'."
+        if writer is not None:
+            await record_audit(
+                db,
+                user=user,
+                action="author_add",
+                resource_type="post",
+                resource_id=post.id,
+                resource_name=post.title,
+                message=(
+                    f"{user.name} adicionou a autoria do redator '{writer.user.name}' "
+                    f"no post '{post.title}'."
+                ),
             )
-        else:
-            message = (
-                f"{user.name} alterou a autoria do post '{post.title}' "
-                f"de '{previous_writer_name}' para '{writer.user.name}'."
-            )
-        await record_audit(
-            db,
-            user=user,
-            action="authorship_change",
-            resource_type="post",
-            resource_id=post.id,
-            resource_name=post.title,
-            message=message,
-        )
     await db.commit()
     return await get_post_by_id(db, post.id)
 

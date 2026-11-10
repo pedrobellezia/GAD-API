@@ -231,30 +231,32 @@ async def update_media_designer(
         media.designer_id = designer.id
 
     if media.designer_id != previous_designer_id:
-        if previous_designer_id is None and designer is not None:
-            message = (
-                f"{user.name} atribuiu a autoria da mídia '{media.alias}' "
-                f"ao designer '{designer.user.name}'."
+        if previous_designer_id is not None:
+            await record_audit(
+                db,
+                user=user,
+                action="author_remove",
+                resource_type="media",
+                resource_id=media.id,
+                resource_name=media.alias,
+                message=(
+                    f"{user.name} retirou a autoria do designer '{previous_designer_name}' "
+                    f"da mídia '{media.alias}'."
+                ),
             )
-        elif previous_designer_id is not None and designer is None:
-            message = (
-                f"{user.name} removeu a autoria do designer '{previous_designer_name}' "
-                f"da mídia '{media.alias}'."
+        if designer is not None:
+            await record_audit(
+                db,
+                user=user,
+                action="author_add",
+                resource_type="media",
+                resource_id=media.id,
+                resource_name=media.alias,
+                message=(
+                    f"{user.name} adicionou a autoria do designer '{designer.user.name}' "
+                    f"na mídia '{media.alias}'."
+                ),
             )
-        else:
-            message = (
-                f"{user.name} alterou a autoria da mídia '{media.alias}' "
-                f"de '{previous_designer_name}' para '{designer.user.name}'."
-            )
-        await record_audit(
-            db,
-            user=user,
-            action="authorship_change",
-            resource_type="media",
-            resource_id=media.id,
-            resource_name=media.alias,
-            message=message,
-        )
     await db.commit()
     return media
 
@@ -362,18 +364,19 @@ async def update_media(
 
     previous_alias = media.alias
     media.alias = media_data.alias
-    await record_audit(
-        db,
-        user=user,
-        action="update",
-        resource_type="media",
-        resource_id=media.id,
-        resource_name=media.alias,
-        message=(
-            f"{user.name} alterou o alias da mídia '{previous_alias}' "
-            f"para '{media.alias}'."
-        ),
-    )
+    if media.alias != previous_alias:
+        await record_audit(
+            db,
+            user=user,
+            action="update",
+            resource_type="media",
+            resource_id=media.id,
+            resource_name=media.alias,
+            message=(
+                f"{user.name} alterou o alias da mídia de '{previous_alias}' "
+                f"para '{media.alias}'."
+            ),
+        )
     await db.commit()
     return media
 
@@ -415,6 +418,16 @@ async def delete_media(
         )
 
     for post in posts:
+        await record_audit(
+            db,
+            user=user,
+            action="media_remove",
+            resource_type="post",
+            resource_id=post.id,
+            resource_name=post.title,
+            agency_id=media.agency_id,
+            message=f"{user.name} retirou a mídia '{media.alias}' do post '{post.title}'.",
+        )
         if post.status != PostStatus.draft:
             previous_status = post.status
             post.status = PostStatus.draft
@@ -427,8 +440,8 @@ async def delete_media(
                 resource_name=post.title,
                 agency_id=media.agency_id,
                 message=(
-                    f"{user.name} reverteu o status do post '{post.title}' "
-                    f"de '{previous_status}' para '{post.status}' ao excluir a mídia '{media.alias}'."
+                    f"{user.name} alterou o status do post '{post.title}' "
+                    f"de '{previous_status}' para '{post.status}'."
                 ),
             )
 

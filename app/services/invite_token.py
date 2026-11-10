@@ -5,7 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import InviteToken
+from app.models import InviteToken, User
+from app.services.audit_log import record_audit
 
 
 async def get_invite_tokens(
@@ -22,28 +23,36 @@ async def get_invite_tokens(
 async def create_invite_tokens(
     db: AsyncSession,
     *,
-    agency_id: UUID,
+    user: User,
     quantity: int,
 ) -> None:
     tokens = [
-        InviteToken(token=secrets.token_urlsafe(16), agency_id=agency_id)
+        InviteToken(token=secrets.token_urlsafe(16), agency_id=user.id)
         for _ in range(quantity)
     ]
 
     db.add_all(tokens)
+    await record_audit(
+        db,
+        user=user,
+        action="create",
+        resource_type="invite_token",
+        agency_id=user.id,
+        message=f"{user.name} criou {quantity} token(s) de convite.",
+    )
     await db.commit()
 
 
 async def delete_invite_token(
     db: AsyncSession,
     *,
-    agency_id: UUID,
+    user: User,
     token: str,
 ) -> None:
     invite_token = await db.scalar(
         select(InviteToken)
         .where(InviteToken.token == token)
-        .where(InviteToken.agency_id == agency_id)
+        .where(InviteToken.agency_id == user.id)
     )
     if not invite_token:
         raise CustomAppError(
@@ -51,5 +60,13 @@ async def delete_invite_token(
             error_type=CustomErrorType.not_found,
         )
 
+    await record_audit(
+        db,
+        user=user,
+        action="delete",
+        resource_type="invite_token",
+        agency_id=user.id,
+        message=f"{user.name} removeu um token de convite.",
+    )
     await db.delete(invite_token)
     await db.commit()

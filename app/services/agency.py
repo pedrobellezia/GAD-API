@@ -106,6 +106,16 @@ async def link_member_by_token(db: AsyncSession, member, token_str: str) -> None
         )
 
     member.agency_id = token.agency_id
+    await record_audit(
+        db,
+        user=member.user,
+        action="member_link",
+        resource_type="user",
+        resource_id=member.id,
+        resource_name=member.user.name,
+        agency_id=token.agency_id,
+        message=f"{member.user.name} vinculou-se à agência.",
+    )
     await db.delete(token)
     await db.commit()
 
@@ -156,14 +166,14 @@ async def unlink_member(
             await record_audit(
                 db,
                 user=actor,
-                action="authorship_change",
+                action="author_remove",
                 resource_type="post",
                 resource_id=post.id,
                 resource_name=post.title,
                 agency_id=agency_id,
                 message=(
-                    f"{actor.name} removeu a autoria do redator "
-                    f"{member_name} do post '{post.title}'."
+                    f"{actor.name} retirou a autoria do redator "
+                    f"'{member_name}' do post '{post.title}'."
                 ),
             )
     elif isinstance(member, Designer):
@@ -182,14 +192,14 @@ async def unlink_member(
             await record_audit(
                 db,
                 user=actor,
-                action="authorship_change",
+                action="author_remove",
                 resource_type="media",
                 resource_id=media.id,
                 resource_name=media.alias,
                 agency_id=agency_id,
                 message=(
-                    f"{actor.name} removeu a autoria do designer "
-                    f"{member_name} da mídia '{media.alias}'."
+                    f"{actor.name} retirou a autoria do designer "
+                    f"'{member_name}' da mídia '{media.alias}'."
                 ),
             )
     elif isinstance(member, Client):
@@ -207,23 +217,34 @@ async def unlink_member(
             previous_status = post.status
             if post.status != PostStatus.published:
                 post.client_id = None
+                await record_audit(
+                    db,
+                    user=actor,
+                    action="recipient_remove",
+                    resource_type="post",
+                    resource_id=post.id,
+                    resource_name=post.title,
+                    agency_id=agency_id,
+                    message=(
+                        f"{actor.name} retirou o cliente '{member_name}' "
+                        f"do post '{post.title}'."
+                    ),
+                )
             if post.status in (PostStatus.review, PostStatus.approved):
                 post.status = PostStatus.draft
-            await record_audit(
-                db,
-                user=actor,
-                action="member_unlink",
-                resource_type="post",
-                resource_id=post.id,
-                resource_name=post.title,
-                agency_id=agency_id,
-                message=(
-                    f"{actor.name} desvinculou o cliente {member_name} do post "
-                    f"'{post.title}'; status: '{previous_status}' para "
-                    f"'{post.status}', referência do cliente "
-                    f"{'preservada' if post.status == PostStatus.published else 'removida'}."
-                ),
-            )
+                await record_audit(
+                    db,
+                    user=actor,
+                    action="status_change",
+                    resource_type="post",
+                    resource_id=post.id,
+                    resource_name=post.title,
+                    agency_id=agency_id,
+                    message=(
+                        f"{actor.name} alterou o status do post '{post.title}' "
+                        f"de '{previous_status}' para '{post.status}'."
+                    ),
+                )
 
     member.agency_id = None
     await record_audit(
@@ -234,7 +255,7 @@ async def unlink_member(
         resource_id=member.id,
         resource_name=member_name,
         agency_id=agency_id,
-        message=f"{actor.name} desvinculou {member_name} da agência.",
+        message=f"{actor.name} desvinculou '{member_name}' da agência.",
     )
     if commit:
         await db.commit()

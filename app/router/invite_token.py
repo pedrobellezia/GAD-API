@@ -36,7 +36,7 @@ async def route_agency_create_invite_tokens(
     user: User = Depends(get_current_user(UserType.agency)),
     db: AsyncSession = Depends(get_db),
 ):
-    await create_invite_tokens(db, agency_id=user.id, quantity=payload.quantity)
+    await create_invite_tokens(db, user=user, quantity=payload.quantity)
     return {"details": f"{payload.quantity} tokens de convite criados com sucesso"}
 
 
@@ -50,5 +50,5 @@ async def route_agency_delete_invite_token(
     user: User = Depends(get_current_user(UserType.agency)),
     db: AsyncSession = Depends(get_db),
 ):
-    await delete_invite_token(db, agency_id=user.id, token=token)
+    await delete_invite_token(db, user=user, token=token)
     return {"details": "Token de convite removido com sucesso"}
