@@ -1,5 +1,9 @@
 CREATE ROLE dml_role;
-GRANT CONNECT ON DATABASE mekanism TO dml_role;
+DO $$
+BEGIN
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO dml_role', current_database());
+END
+$$;
 
 GRANT USAGE ON SCHEMA public TO dml_role;
 

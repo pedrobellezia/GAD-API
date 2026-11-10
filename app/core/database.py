@@ -11,17 +11,17 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.core import get_env
 
-DATABASE_URL = get_env("DATABASE_URL")
+DATABASE_URL = get_env("DATABASE_DML_URL")
 
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+    raise ValueError("DATABASE_DML_URL environment variable is not set")
 
 engine = create_async_engine(
     DATABASE_URL,
-    pool_size=20,
-    max_overflow=10,
-    pool_recycle=1800,
-    pool_timeout=30,
+    pool_size=int(get_env("DATABASE_POOL_SIZE") or 20),
+    max_overflow=int(get_env("DATABASE_MAX_OVERFLOW") or 10),
+    pool_recycle=int(get_env("DATABASE_POOL_RECYCLE") or 1800),
+    pool_timeout=int(get_env("DATABASE_POOL_TIMEOUT") or 30),
     pool_pre_ping=True,
 )
 

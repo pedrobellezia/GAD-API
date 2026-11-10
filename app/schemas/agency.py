@@ -1,11 +1,11 @@
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import Agency, User
 from app.schemas.user import UserCreate, UserRead
-from app.utils.types import CNPJ
+from app.utils.types import CNPJ, NormalizedEmail
 
 
 class AgencyCreate(BaseModel):
@@ -24,7 +24,7 @@ class AgencyRead(BaseModel):
 
 class AgencyFilter(BaseModel):
     id: UUID | None = None
-    user_email: EmailStr | None = None
+    user_email: NormalizedEmail | None = None
     user_name: str | None = None
     cnpj: str | None = None
     order_by: Literal["new", "old"] = "new"

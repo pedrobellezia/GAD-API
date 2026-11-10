@@ -104,9 +104,7 @@ async def route_delete_avatar(
 @router.get(path="/avatar", response_class=FileResponse)
 async def route_get_avatar(
     user: User = Depends(get_current_user()),
-    db: AsyncSession = Depends(get_db),
 ):
-    await db.refresh(user)
     if not user.avatar:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

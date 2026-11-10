@@ -31,16 +31,17 @@ def upgrade() -> None:
     op.execute("""
         CREATE POLICY hide_soft_deleted_users
             ON users
-            AS RESTRICTIVE
+            AS PERMISSIVE
             FOR ALL
             USING (
             users.deleted_at is NULL
-            );
+            )
+            WITH CHECK (true);
     """)
     op.execute("""
         CREATE POLICY hide_soft_deleted_clients
             ON clients
-            AS RESTRICTIVE
+            AS PERMISSIVE
             FOR ALL
             USING (
             EXISTS (SELECT 1
@@ -52,7 +53,7 @@ def upgrade() -> None:
     op.execute("""
         CREATE POLICY hide_soft_deleted_writers
             ON writers
-            AS RESTRICTIVE
+            AS PERMISSIVE
             FOR ALL
             USING (
             EXISTS (SELECT 1
@@ -64,7 +65,7 @@ def upgrade() -> None:
     op.execute("""
         CREATE POLICY hide_soft_deleted_agencies
             ON agencies
-            AS RESTRICTIVE
+            AS PERMISSIVE
             FOR ALL
             USING (
             EXISTS (SELECT 1
@@ -76,7 +77,7 @@ def upgrade() -> None:
     op.execute("""
         CREATE POLICY hide_soft_deleted_designers
             ON designers
-            AS RESTRICTIVE
+            AS PERMISSIVE
             FOR ALL
             USING (
             EXISTS (SELECT 1

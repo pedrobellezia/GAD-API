@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import Comment, Post, User, UserType
+from app.models import Comment, Post, PostStatus, User, UserType
 from app.schemas import CommentCreate
 from app.services.audit_log import record_audit
 
@@ -27,7 +27,7 @@ def _can_read_post_comments(post: Post, user: User) -> bool:
     if user.type == UserType.designer:
         return bool(user.designer and post.agency_id == user.designer.agency_id)
     if user.type == UserType.client:
-        return post.client_id == user.id
+        return post.client_id == user.id and post.status != PostStatus.draft
     return False
 
 
@@ -37,7 +37,7 @@ def _can_write_post_comment(post: Post, user: User) -> bool:
     if user.type == UserType.writer:
         return post.writer_id == user.id
     if user.type == UserType.client:
-        return post.client_id == user.id
+        return post.client_id == user.id and post.status != PostStatus.draft
     return False
 
 

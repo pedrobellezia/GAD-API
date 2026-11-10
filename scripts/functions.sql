@@ -27,3 +27,18 @@ $$;
 
 REVOKE ALL ON FUNCTION restore_user(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION restore_user(TEXT) TO dml_role;
+
+CREATE OR REPLACE FUNCTION soft_delete_user(p_user_id UUID)
+RETURNS VOID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    UPDATE users
+    SET deleted_at = NOW(),
+        updated_at = NOW()
+    WHERE id = p_user_id;
+$$;
+
+REVOKE ALL ON FUNCTION soft_delete_user(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION soft_delete_user(UUID) TO dml_role;

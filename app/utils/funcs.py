@@ -9,6 +9,10 @@ def non_empty(value):
     return value
 
 
+def normalize_email(value: str) -> str:
+    return value.strip().lower()
+
+
 def validate_cnpj(cnpj: str) -> str:
     cnpj = re.sub(r"\D", "", cnpj)
 
