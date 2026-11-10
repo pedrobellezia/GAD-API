@@ -25,7 +25,14 @@ async def route_get_audit_logs(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user(UserType.agency)),
+    user: User = Depends(
+        get_current_user(
+            UserType.agency,
+            UserType.writer,
+            UserType.designer,
+            UserType.client,
+        )
+    ),
 ):
     return await get_audit_logs(
         db=db,
