@@ -1,10 +1,10 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import AuditLog, User, UserType
+from app.models import AuditLog, Post, PostMedia, PostStatus, User, UserType
 
 
 def _agency_id(user: User) -> UUID | None:
@@ -53,13 +53,38 @@ async def get_audit_logs(
     skip: int = 0,
     limit: int = 100,
 ) -> list[AuditLog]:
-    if user.type != UserType.agency:
+    agency_id = _agency_id(user)
+    if not agency_id:
+        return []
+
+    query = select(AuditLog).where(AuditLog.agency_id == agency_id)
+
+    if user.type in (UserType.writer, UserType.designer):
+        query = query.where(AuditLog.resource_type.in_(("post", "media", "comment")))
+    elif user.type == UserType.client:
+        client_post_ids = select(Post.id).where(Post.client_id == user.id)
+        client_media_ids = (
+            select(PostMedia.media_id)
+            .join(PostMedia.post)
+            .where(
+                Post.client_id == user.id,
+                Post.status != PostStatus.draft,
+            )
+        )
+        query = query.where(
+            or_(
+                (AuditLog.resource_type == "post")
+                & AuditLog.resource_id.in_(client_post_ids),
+                (AuditLog.resource_type == "media")
+                & AuditLog.resource_id.in_(client_media_ids),
+            )
+        )
+    elif user.type != UserType.agency:
         raise CustomAppError(
-            message="Apenas a agência pode consultar o histórico",
+            message="Você não tem permissão para consultar o histórico",
             error_type=CustomErrorType.forbidden,
         )
 
-    query = select(AuditLog).where(AuditLog.agency_id == user.id)
     if action:
         query = query.where(AuditLog.action == action)
     if resource_type:
