@@ -2,13 +2,15 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from app.utils.types import NonEmptyStr
+
 
 class MediaDesignerUpdate(BaseModel):
     designer_id: UUID | None = None
 
 
 class MediaUpdate(BaseModel):
-    alias: str
+    alias: NonEmptyStr
 
 
 class MediaRead(BaseModel):

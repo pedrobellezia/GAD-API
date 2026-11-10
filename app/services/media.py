@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -126,6 +127,11 @@ async def upload_medias(
     try:
         for alias, file in zip(aliases, files, strict=True):
             try:
+                if not alias or not alias.strip():
+                    raise CustomAppError(
+                        message="O alias da mídia não pode ser vazio",
+                        error_type=CustomErrorType.bad_request,
+                    )
                 file_info = await validate_media_file(file)
 
                 filename, size_bytes = await store_media_file(
@@ -156,6 +162,7 @@ async def upload_medias(
 
         if medias:
             db.add_all(medias)
+            await db.flush()
             for media in medias:
                 await record_audit(
                     db,
@@ -418,6 +425,11 @@ async def delete_media(
         )
 
     for post in posts:
+        previous_status = post.status
+        changed_status = previous_status != PostStatus.draft
+        post.updated_at = datetime.now(UTC)
+        if changed_status:
+            post.status = PostStatus.draft
         await record_audit(
             db,
             user=user,
@@ -428,9 +440,7 @@ async def delete_media(
             agency_id=media.agency_id,
             message=f"{user.name} retirou a mídia '{media.alias}' do post '{post.title}'.",
         )
-        if post.status != PostStatus.draft:
-            previous_status = post.status
-            post.status = PostStatus.draft
+        if changed_status:
             await record_audit(
                 db,
                 user=user,
