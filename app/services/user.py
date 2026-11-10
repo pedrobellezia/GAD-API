@@ -119,19 +119,30 @@ async def update_profile(
     if email is not None:
         user.email = email
 
-    await record_audit(
-        db,
-        user=user,
-        action="update",
-        resource_type="user",
-        resource_id=user.id,
-        resource_name=user.name,
-        message=(
-            f"{user.name} atualizou o perfil "
-            f"(nome: '{previous_name}' para '{user.name}', "
-            f"email: '{previous_email}' para '{user.email}')."
-        ),
-    )
+    if user.name != previous_name:
+        await record_audit(
+            db,
+            user=user,
+            action="update",
+            resource_type="user",
+            resource_id=user.id,
+            resource_name=user.name,
+            message=(
+                f"{user.name} alterou o nome de '{previous_name}' para '{user.name}'."
+            ),
+        )
+    if user.email != previous_email:
+        await record_audit(
+            db,
+            user=user,
+            action="update",
+            resource_type="user",
+            resource_id=user.id,
+            resource_name=user.name,
+            message=(
+                f"{user.name} alterou o email de '{previous_email}' para '{user.email}'."
+            ),
+        )
     await db.commit()
     return user
 
