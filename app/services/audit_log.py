@@ -26,9 +26,15 @@ async def record_audit(
     resource_id: UUID | None = None,
     resource_name: str | None = None,
     agency_id: UUID | None = None,
+    personal: bool = False,
 ) -> AuditLog:
+    # Eventos pessoais (ex.: troca de senha) não pertencem à agência e não aparecem no feed dela
+    if personal:
+        agency_id = None
+    elif agency_id is None:
+        agency_id = _agency_id(user)
     audit_log = AuditLog(
-        agency_id=agency_id if agency_id is not None else _agency_id(user),
+        agency_id=agency_id,
         actor_id=user.id,
         actor_name=user.name,
         actor_email=user.email,
@@ -60,6 +66,13 @@ async def get_audit_logs(
     query = select(AuditLog).where(AuditLog.agency_id == agency_id)
 
     if user.type in (UserType.writer, UserType.designer):
+        # Redator e designer só veem o histórico dentro de um post ou mídia;
+        # o feed completo de atividades é exclusivo da agência.
+        if not resource_id:
+            raise CustomAppError(
+                message="Informe o post ou a mídia para consultar o histórico",
+                error_type=CustomErrorType.bad_request,
+            )
         query = query.where(AuditLog.resource_type.in_(("post", "media", "comment")))
     elif user.type == UserType.client:
         client_post_ids = select(Post.id).where(

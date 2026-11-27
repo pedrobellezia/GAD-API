@@ -451,7 +451,7 @@ async def delete_media(
                 agency_id=media.agency_id,
                 message=(
                     f"{user.name} alterou o status do post '{post.title}' "
-                    f"de '{previous_status}' para '{post.status}'."
+                    f"de '{previous_status.label}' para '{post.status.label}'."
                 ),
             )
 

@@ -25,6 +25,20 @@ class PostStatus(StrEnum):
     denied = "denied"
     published = "published"
 
+    @property
+    def label(self) -> str:
+        """Nome do status em português, usado nas mensagens de auditoria."""
+        return POST_STATUS_LABELS[self]
+
+
+POST_STATUS_LABELS = {
+    PostStatus.draft: "Rascunho",
+    PostStatus.review: "Em revisão",
+    PostStatus.approved: "Aprovado",
+    PostStatus.denied: "Reprovado",
+    PostStatus.published: "Publicado",
+}
+
 
 class Post(Base):
     __tablename__ = "posts"
