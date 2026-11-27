@@ -55,3 +55,12 @@ class UserFilter(BaseModel):
 
         query = query.offset(self.skip).limit(self.limit)
         return query
+
+
+class UserSummary(BaseModel):
+    id: UUID
+    name: str
+    type: UserType
+    avatar_url: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)

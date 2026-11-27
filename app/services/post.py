@@ -256,9 +256,7 @@ async def update_post(
     previous_content = post.content
     previous_client_id = post.client_id
     previous_status = post.status
-    target_title = (
-        post_data.title if post_data.title is not None else previous_title
-    )
+    target_title = post_data.title if post_data.title is not None else previous_title
     audit_events: list[tuple[str, str]] = []
 
     new_client = None
