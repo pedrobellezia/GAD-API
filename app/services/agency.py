@@ -255,7 +255,7 @@ async def unlink_member(
                     agency_id=agency_id,
                     message=(
                         f"{actor.name} alterou o status do post '{post.title}' "
-                        f"de '{previous_status}' para '{post.status}'."
+                        f"de '{previous_status.label}' para '{post.status.label}'."
                     ),
                 )
 
@@ -268,7 +268,11 @@ async def unlink_member(
         resource_id=member.id,
         resource_name=member_name,
         agency_id=agency_id,
-        message=f"{actor.name} desvinculou '{member_name}' da agência.",
+        message=(
+            f"{member_name} saiu da agência."
+            if actor.id == member.id
+            else f"{actor.name} desvinculou '{member_name}' da agência."
+        ),
     )
     if commit:
         await db.commit()

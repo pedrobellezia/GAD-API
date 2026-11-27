@@ -162,5 +162,6 @@ async def change_password(
         resource_id=user.id,
         resource_name=user.name,
         message=f"{user.name} alterou a própria senha.",
+        personal=True,
     )
     await db.commit()

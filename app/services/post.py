@@ -432,7 +432,7 @@ async def update_post(
             resource_name=post.title,
             message=(
                 f"{user.name} alterou o status do post '{post.title}' "
-                f"de '{previous_status}' para '{post.status}'."
+                f"de '{previous_status.label}' para '{post.status.label}'."
             ),
         )
 
@@ -471,7 +471,7 @@ async def transition_post_status(
     }
     if next_status not in allowed_transitions.get(current_status, set()):
         raise CustomAppError(
-            message=f"Transição de {current_status} para {next_status} não permitida",
+            message=f"Transição de {current_status.label} para {next_status.label} não permitida",
             error_type=CustomErrorType.bad_request,
         )
 
@@ -519,7 +519,7 @@ async def transition_post_status(
         resource_name=post.title,
         message=(
             f"{user.name} alterou o status do post '{post.title}' "
-            f"de '{current_status}' para '{next_status}'."
+            f"de '{current_status.label}' para '{next_status.label}'."
         ),
     )
     await db.commit()
