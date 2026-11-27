@@ -47,6 +47,9 @@ class PostRead(BaseModel):
     writer_id: UUID | None = None
     client: UserSummary | None = None
     writer: UserSummary | None = None
+    published_at: datetime | None = None
+    published_client_name: str | None = None
+    published_writer_name: str | None = None
     medias: list[PostMediaRead] = []
     comments: list[CommentBaseRead] = []
     created_at: datetime

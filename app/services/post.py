@@ -510,6 +510,15 @@ async def transition_post_status(
         )
 
     post.status = next_status
+    if next_status == PostStatus.published:
+        # Registro permanente da publicação (ver Post.published_*)
+        post.published_at = datetime.now(UTC)
+        post.published_client_name = (
+            post.client.user.name if post.client and post.client.user else None
+        )
+        post.published_writer_name = (
+            post.writer.user.name if post.writer and post.writer.user else None
+        )
     await record_audit(
         db,
         user=user,
@@ -636,9 +645,11 @@ async def delete_post(
             error_type=CustomErrorType.forbidden,
         )
 
-    if post.status in (PostStatus.denied, PostStatus.published):
+    # Publicado é registro permanente. Reprovado é um rascunho encerrado e pode ser
+    # excluído; o log de exclusão continua no histórico da agência.
+    if post.status == PostStatus.published:
         raise CustomAppError(
-            message="Posts negados ou publicados não podem ser excluídos",
+            message="Posts publicados não podem ser excluídos",
             error_type=CustomErrorType.bad_request,
         )
 

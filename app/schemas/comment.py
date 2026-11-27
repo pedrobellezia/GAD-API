@@ -14,7 +14,7 @@ class CommentCreate(BaseModel):
 class CommentBaseRead(BaseModel):
     id: UUID
     post_id: UUID
-    author_id: UUID
+    author_id: UUID | None
     content: str
     created_at: datetime
 
