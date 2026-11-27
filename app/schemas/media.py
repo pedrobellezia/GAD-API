@@ -23,5 +23,7 @@ class MediaRead(BaseModel):
     mime_type: str
     size_bytes: int
     url: str | None = None
+    # Miniatura WebP (imagens e vídeos) para listagens; o original fica em `url`
+    thumbnail_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
