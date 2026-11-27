@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import Agency, User
-from app.schemas.user import UserCreate, UserRead
+from app.schemas.user import UserCreate, UserRead, UserSummary
 from app.utils.types import CNPJ, NormalizedEmail
 
 
@@ -18,6 +18,25 @@ class AgencyRead(BaseModel):
     id: UUID
     cnpj: CNPJ
     user: UserRead
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AgencyPublicRead(BaseModel):
+    """Agência vista por um membro: sem o e-mail da conta."""
+
+    id: UUID
+    cnpj: CNPJ
+    user: UserSummary
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AgencyMemberRead(BaseModel):
+    """Membro (cliente, redator ou designer) listado pela agência: sem e-mail."""
+
+    id: UUID
+    user: UserSummary
 
     model_config = ConfigDict(from_attributes=True)
 

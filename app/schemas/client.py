@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import Agency, Client, User
-from app.schemas.agency import AgencyRead
+from app.schemas.agency import AgencyPublicRead
 from app.schemas.user import UserCreate, UserRead
 from app.utils.types import NormalizedEmail
 
@@ -17,7 +17,7 @@ class ClientCreate(BaseModel):
 class ClientRead(BaseModel):
     id: UUID
     user: UserRead
-    agency: AgencyRead | None
+    agency: AgencyPublicRead | None
 
     model_config = ConfigDict(from_attributes=True)
 

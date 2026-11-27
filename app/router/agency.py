@@ -7,12 +7,10 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_profile, get_current_user
 from app.models import Client, Designer, User, UserType, Writer
 from app.schemas import (
-    AgencyRead,
-    ClientRead,
-    DesignerRead,
+    AgencyMemberRead,
+    AgencyPublicRead,
     DetailsResponse,
     InviteTokenPayload,
-    WriterRead,
 )
 from app.services import resolve_profile
 from app.services.agency import (
@@ -64,7 +62,7 @@ async def route_unlink_agency_self(
 
 @router.get(
     path="/my",
-    response_model=AgencyRead,
+    response_model=AgencyPublicRead,
     status_code=status.HTTP_200_OK,
 )
 async def route_get_my_agency(
@@ -102,7 +100,7 @@ async def route_agency_member_unlink(
 
 @router.get(
     path="/clients",
-    response_model=list[ClientRead],
+    response_model=list[AgencyMemberRead],
     status_code=status.HTTP_200_OK,
 )
 async def route_get_clients(
@@ -124,7 +122,7 @@ async def route_get_clients(
 
 @router.get(
     path="/writers",
-    response_model=list[WriterRead],
+    response_model=list[AgencyMemberRead],
     status_code=status.HTTP_200_OK,
 )
 async def route_get_writers(
@@ -146,7 +144,7 @@ async def route_get_writers(
 
 @router.get(
     path="/designers",
-    response_model=list[DesignerRead],
+    response_model=list[AgencyMemberRead],
     status_code=status.HTTP_200_OK,
 )
 async def route_get_designers(
