@@ -30,6 +30,7 @@ from app.models import (
 )
 from app.schemas import MediaDesignerUpdate, MediaUpdate
 from app.services.audit_log import record_audit
+from app.services.thumbnail import remove_thumbnail
 
 
 class MediaFileInfo(BaseModel):
@@ -471,6 +472,7 @@ async def delete_media(
     await db.delete(media)
     await db.commit()
 
+    await remove_thumbnail(filename)
     path = get_media_path(filename)
     if path.exists():
         try:

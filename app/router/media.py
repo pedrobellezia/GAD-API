@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_profile, get_current_user
 from app.exceptions import CustomAppError, CustomErrorType
-from app.models import Designer, Media, User, UserType
+from app.models import Designer, Media, MediaType, User, UserType
 from app.schemas import (
     DetailsResponse,
     MediaDesignerUpdate,
@@ -31,14 +31,24 @@ from app.services.media import (
     update_media_designer,
     upload_medias,
 )
+from app.services.thumbnail import ensure_thumbnail
 
 router = APIRouter()
+
+
+# O conteúdo de uma mídia nunca muda depois do upload; "private" evita cache em proxies
+MEDIA_CACHE_HEADERS = {"Cache-Control": "private, max-age=86400"}
 
 
 def media_read_response(media: Media, request: Request) -> MediaRead:
     response = MediaRead.model_validate(media)
     return response.model_copy(
-        update={"url": str(request.url_for("serve_media_file", media_id=media.id))}
+        update={
+            "url": str(request.url_for("serve_media_file", media_id=media.id)),
+            "thumbnail_url": str(
+                request.url_for("serve_media_thumbnail", media_id=media.id)
+            ),
+        }
     )
 
 
@@ -132,6 +142,44 @@ async def route_serve_media_file(
         path=path,
         media_type=media.mime_type,
         filename=media.filename,
+        headers=MEDIA_CACHE_HEADERS,
+    )
+
+
+@router.get(
+    path="/{media_id}/thumbnail",
+    name="serve_media_thumbnail",
+    response_class=FileResponse,
+    summary="Visualizar miniatura da mídia",
+)
+async def route_serve_media_thumbnail(
+    media_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(
+        get_current_user(
+            UserType.agency,
+            UserType.writer,
+            UserType.designer,
+            UserType.client,
+        )
+    ),
+):
+    media = await get_media_for_view(db=db, media_id=media_id, user=user)
+    thumbnail = await ensure_thumbnail(media)
+    if thumbnail:
+        return FileResponse(
+            path=thumbnail, media_type="image/webp", headers=MEDIA_CACHE_HEADERS
+        )
+
+    # Sem miniatura (falha na geração): imagem cai para o original; vídeo não tem fallback
+    path = get_media_path(media.filename)
+    if media.media_type == MediaType.image and path.is_file():
+        return FileResponse(
+            path=path, media_type=media.mime_type, headers=MEDIA_CACHE_HEADERS
+        )
+    raise CustomAppError(
+        message="Miniatura indisponível",
+        error_type=CustomErrorType.not_found,
     )
 
 
