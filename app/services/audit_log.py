@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions import CustomAppError, CustomErrorType
@@ -56,6 +56,7 @@ async def get_audit_logs(
     action: str | None = None,
     resource_type: str | None = None,
     resource_id: UUID | None = None,
+    search: str | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> list[AuditLog]:
@@ -107,6 +108,25 @@ async def get_audit_logs(
         query = query.where(AuditLog.resource_type == resource_type)
     if resource_id:
         query = query.where(AuditLog.resource_id == resource_id)
+    if search and search.strip():
+        # Busca parcial na mensagem, em quem fez e no item afetado, sem diferenciar
+        # maiúsculas nem acentos. Curingas digitados pelo usuário são tratados como texto.
+        escaped = (
+            search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        )
+        pattern = func.unaccent(f"%{escaped}%")
+        query = query.where(
+            or_(
+                *(
+                    func.unaccent(column).ilike(pattern, escape="\\")
+                    for column in (
+                        AuditLog.message,
+                        AuditLog.actor_name,
+                        AuditLog.resource_name,
+                    )
+                )
+            )
+        )
 
     result = await db.scalars(
         query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit)
