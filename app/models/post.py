@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from enum import StrEnum
 
 from sqlalchemy import (
-    Enum as SQLEnum,
-)
-from sqlalchemy import (
+    DateTime,
     ForeignKey,
     Integer,
     String,
     Text,
     Uuid,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -72,6 +74,18 @@ class Post(Base):
         SQLEnum(PostStatus, name="poststatus"),
         default=PostStatus.draft,
         nullable=False,
+    )
+
+    # Registro da publicação: gravado ao publicar e nunca mais alterado. Preserva quem
+    # era o cliente e o redator mesmo depois de desvínculo ou exclusão das contas.
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    published_client_name: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
+    )
+    published_writer_name: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
     )
 
     agency: Mapped[Agency] = relationship(back_populates="posts")

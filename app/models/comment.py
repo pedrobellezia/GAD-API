@@ -15,10 +15,11 @@ class Comment(Base):
     post_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    author_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    # SET NULL: o comentário sobrevive à exclusão da conta do autor (autor anônimo)
+    author_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
     post: Mapped[Post] = relationship(back_populates="comments")
-    author: Mapped[User] = relationship()
+    author: Mapped[User | None] = relationship()
