@@ -2,11 +2,12 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models import Post, PostStatus
 from app.schemas.comment import CommentBaseRead
 from app.schemas.postmedia import PostMediaCreate, PostMediaRead
+from app.schemas.user import UserSummary
 from app.utils.types import NonEmptyStr
 
 
@@ -44,12 +45,21 @@ class PostRead(BaseModel):
     agency_id: UUID | None = None
     client_id: UUID | None = None
     writer_id: UUID | None = None
+    client: UserSummary | None = None
+    writer: UserSummary | None = None
     medias: list[PostMediaRead] = []
     comments: list[CommentBaseRead] = []
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("client", "writer", mode="before")
+    @classmethod
+    def _profile_to_user(cls, value):
+        # Post.client e Post.writer são perfis; expõe só o resumo público do usuário.
+        # Usuário desativado fica oculto pela RLS e vira None.
+        return getattr(value, "user", value) if value is not None else None
 
 
 class PostFilter(BaseModel):
