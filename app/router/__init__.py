@@ -5,6 +5,7 @@ from .invite_token import router as invite_token_router
 from .me import router as me_router
 from .media import router as media_router
 from .post import router as post_router
+from .user import router as user_router
 
 __all__ = [
     "agency_router",
@@ -14,4 +15,5 @@ __all__ = [
     "me_router",
     "media_router",
     "post_router",
+    "user_router",
 ]

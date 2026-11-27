@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.exceptions import CustomAppError, CustomErrorType
 from app.models import Comment, Post, PostStatus, User, UserType
@@ -50,6 +51,7 @@ async def get_comments(db: AsyncSession, post_id: UUID, user: User) -> list[Comm
         )
     result = await db.scalars(
         select(Comment)
+        .options(selectinload(Comment.author))
         .where(Comment.post_id == post_id)
         .order_by(Comment.created_at.asc())
     )
@@ -87,6 +89,7 @@ async def create_comment(
     )
     await db.commit()
     await db.refresh(comment)
+    await db.refresh(comment, ["author"])
     return comment
 
 

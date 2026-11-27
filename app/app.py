@@ -19,6 +19,7 @@ from app.router import (
     me_router,
     media_router,
     post_router,
+    user_router,
 )
 
 app = FastAPI(title="Gad API")
@@ -30,6 +31,7 @@ app.include_router(me_router, prefix="/me", tags=["me"])
 app.include_router(media_router, prefix="/media", tags=["media"])
 app.include_router(post_router, prefix="/posts", tags=["posts"])
 app.include_router(invite_token_router, prefix="/invite_token", tags=["invite_token"])
+app.include_router(user_router, prefix="/users", tags=["users"])
 
 
 app.add_exception_handler(RequestValidationError, request_validation_handler)

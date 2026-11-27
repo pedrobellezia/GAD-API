@@ -9,7 +9,7 @@ from .auth import (
     RegisterPayload,
 )
 from .client import ClientCreate, ClientFilter, ClientRead, ClientReadNoAgency
-from .comment import CommentCreate, CommentRead
+from .comment import CommentBaseRead, CommentCreate, CommentRead
 from .common import DetailsResponse
 from .designer import (
     DesignerCreate,
@@ -30,7 +30,7 @@ from .post import (
     PostWriterUpdate,
 )
 from .postmedia import PostMediaCreate, PostMediaRead
-from .user import UserCreate, UserFilter, UserRead
+from .user import UserCreate, UserFilter, UserRead, UserSummary
 from .writer import WriterCreate, WriterFilter, WriterRead, WriterReadNoAgency
 
 __all__ = [
@@ -46,6 +46,7 @@ __all__ = [
     "UserCreate",
     "UserRead",
     "UserFilter",
+    "UserSummary",
     "WriterCreate",
     "WriterRead",
     "WriterFilter",
@@ -74,4 +75,5 @@ __all__ = [
     "ProfileUpdatePayload",
     "CommentCreate",
     "CommentRead",
+    "CommentBaseRead",
 ]
