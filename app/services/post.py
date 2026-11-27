@@ -74,6 +74,8 @@ async def get_posts(
     query = select(Post).options(
         selectinload(Post.medias).selectinload(PostMedia.media),
         selectinload(Post.comments),
+        selectinload(Post.client).selectinload(Client.user),
+        selectinload(Post.writer).selectinload(Writer.user),
     )
 
     # Permissões de Visibilidade (RN-16, RN-17)
@@ -115,6 +117,8 @@ async def get_post_by_id(
         .options(
             selectinload(Post.medias).selectinload(PostMedia.media),
             selectinload(Post.comments),
+            selectinload(Post.client).selectinload(Client.user),
+            selectinload(Post.writer).selectinload(Writer.user),
         )
         .where(Post.id == post_id)
         .execution_options(populate_existing=True)
