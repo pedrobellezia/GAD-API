@@ -8,7 +8,6 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models import Comment, Post, User, UserType
 from app.router.media import media_read_response
-from app.router.user import user_summary_response
 from app.schemas import (
     CommentCreate,
     CommentRead,
@@ -27,11 +26,8 @@ from app.services.comment import create_comment, delete_comment, get_comments
 router = APIRouter()
 
 
-def comment_read_response(comment: Comment, request: Request) -> CommentRead:
-    response = CommentRead.model_validate(comment, from_attributes=True)
-    return response.model_copy(
-        update={"author": user_summary_response(comment.author, request)}
-    )
+def comment_read_response(comment: Comment) -> CommentRead:
+    return CommentRead.model_validate(comment)
 
 
 def post_read_response(post: Post, request: Request) -> PostRead:
@@ -53,12 +49,11 @@ def post_read_response(post: Post, request: Request) -> PostRead:
 )
 async def get_post_comments_route(
     post_id: UUID,
-    request: Request,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user()),
 ):
     comments = await get_comments(db=db, post_id=post_id, user=user)
-    return [comment_read_response(comment, request) for comment in comments]
+    return [comment_read_response(comment) for comment in comments]
 
 
 @router.post(
@@ -69,7 +64,6 @@ async def get_post_comments_route(
 async def create_post_comment_route(
     post_id: UUID,
     comment_data: CommentCreate,
-    request: Request,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user()),
 ):
@@ -79,7 +73,7 @@ async def create_post_comment_route(
         user=user,
         comment_data=comment_data,
     )
-    return comment_read_response(comment, request)
+    return comment_read_response(comment)
 
 
 @router.delete(

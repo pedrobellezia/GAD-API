@@ -1,8 +1,9 @@
+import hashlib
 from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.models import User, UserType
 from app.utils.types import NonEmptyStr, NormalizedEmail
@@ -57,10 +58,35 @@ class UserFilter(BaseModel):
         return query
 
 
+# Caminho servido por `GET /users/{user_id}/avatar` (app/router/user.py)
+USER_AVATAR_PATH = "/users/{user_id}/avatar"
+
+
+def user_avatar_url(user: User) -> str | None:
+    if not user.avatar:
+        return None
+    version = hashlib.sha256(user.avatar.encode()).hexdigest()[:12]
+    return f"{USER_AVATAR_PATH.format(user_id=user.id)}?v={version}"
+
+
 class UserSummary(BaseModel):
+    """Dados públicos de um usuário: nunca inclui e-mail."""
+
     id: UUID
     name: str
     type: UserType
     avatar_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _from_user(cls, data):
+        if isinstance(data, User):
+            return {
+                "id": data.id,
+                "name": data.name,
+                "type": data.type,
+                "avatar_url": user_avatar_url(data),
+            }
+        return data
