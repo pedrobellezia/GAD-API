@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -13,6 +14,8 @@ class InviteTokenBatchCreate(BaseModel):
 class InviteTokenRead(BaseModel):
     token: str
     agency_id: UUID
+    created_at: datetime
+    expires_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
