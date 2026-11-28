@@ -1,9 +1,17 @@
+from datetime import UTC, datetime
+from math import ceil
+
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager, selectinload
 
-from app.core import pswd_hasher
+from app.core import (
+    INVITE_LINK_BLOCK_MINUTES,
+    INVITE_LINK_MAX_ATTEMPTS,
+    INVITE_LINK_WINDOW_MINUTES,
+    pswd_hasher,
+)
 from app.models import (
     Agency,
     Client,
@@ -17,7 +25,16 @@ from app.models import (
     Writer,
 )
 from app.schemas import AgencyCreate, AgencyFilter
+from app.services.attempt_limit import (
+    clear_attempts,
+    get_blocked_until,
+    record_failed_attempt,
+)
 from app.services.audit_log import record_audit
+from app.services.invite_token import (
+    invite_token_expiry_cutoff,
+    normalize_invite_token,
+)
 
 
 async def get_agencies(db: AsyncSession, filters: AgencyFilter) -> list[Agency]:
@@ -95,15 +112,40 @@ async def link_member_by_token(db: AsyncSession, member, token_str: str) -> None
             detail="Usuário ja vinculado a uma agencia",
         )
 
+    # Limite de erros por usuário: impede testar códigos em sequência
+    attempt_key = f"invite_link:{member.id}"
+    blocked_until = await get_blocked_until(db, attempt_key)
+    if blocked_until:
+        minutes = max(1, ceil((blocked_until - datetime.now(UTC)).total_seconds() / 60))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                "Muitas tentativas com token inválido. "
+                f"Tente novamente em {minutes} minuto{'s' if minutes > 1 else ''}."
+            ),
+        )
+
     token: InviteToken | None = await db.scalar(
-        select(InviteToken).where(InviteToken.token == token_str).with_for_update()
+        select(InviteToken)
+        .where(InviteToken.token.in_(normalize_invite_token(token_str)))
+        .where(InviteToken.created_at >= invite_token_expiry_cutoff())
+        .with_for_update()
     )
 
     if not token:
+        await record_failed_attempt(
+            db,
+            attempt_key,
+            max_attempts=INVITE_LINK_MAX_ATTEMPTS,
+            window_minutes=INVITE_LINK_WINDOW_MINUTES,
+            block_minutes=INVITE_LINK_BLOCK_MINUTES,
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Token de convite invalido",
+            detail="Token de convite inválido ou expirado",
         )
+
+    await clear_attempts(db, attempt_key, commit=False)
 
     member.agency_id = token.agency_id
     await record_audit(

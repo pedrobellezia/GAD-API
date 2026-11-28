@@ -1,8 +1,7 @@
 import hashlib
-from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, Request, status
-from sqlalchemy import delete, select, text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import (
@@ -12,7 +11,7 @@ from app.core import (
     create_token,
     pswd_hasher,
 )
-from app.models import LoginAttempt, User
+from app.models import User
 from app.schemas import (
     AgencyCreate,
     ClientCreate,
@@ -23,6 +22,11 @@ from app.schemas import (
 from app.schemas.auth import ChangePasswordPayload
 from app.schemas.designer import DesignerCreate
 from app.services import create_agency
+from app.services.attempt_limit import (
+    clear_attempts,
+    get_blocked_until,
+    record_failed_attempt,
+)
 from app.services.audit_log import record_audit
 from app.services.client import create_client
 from app.services.designer import create_designer
@@ -36,38 +40,21 @@ def _login_key(payload: LoginPayload, request: Request) -> str:
 
 
 async def _is_login_blocked(db: AsyncSession, key: str) -> bool:
-    attempt = await db.scalar(
-        select(LoginAttempt).where(LoginAttempt.key == key).with_for_update()
-    )
-    return bool(
-        attempt and attempt.blocked_until and attempt.blocked_until > datetime.now(UTC)
-    )
+    return await get_blocked_until(db, key) is not None
 
 
 async def _record_failed_login(db: AsyncSession, key: str) -> None:
-    now = datetime.now(UTC)
-    attempt = await db.scalar(
-        select(LoginAttempt).where(LoginAttempt.key == key).with_for_update()
+    await record_failed_attempt(
+        db,
+        key,
+        max_attempts=LOGIN_MAX_ATTEMPTS,
+        window_minutes=LOGIN_WINDOW_MINUTES,
+        block_minutes=LOGIN_BLOCK_MINUTES,
     )
-    if not attempt or now - attempt.window_started_at >= timedelta(
-        minutes=LOGIN_WINDOW_MINUTES
-    ):
-        attempt = LoginAttempt(
-            key=key,
-            failed_count=1,
-            window_started_at=now,
-        )
-        db.add(attempt)
-    else:
-        attempt.failed_count += 1
-        if attempt.failed_count >= LOGIN_MAX_ATTEMPTS:
-            attempt.blocked_until = now + timedelta(minutes=LOGIN_BLOCK_MINUTES)
-    await db.commit()
 
 
 async def _clear_login_attempts(db: AsyncSession, key: str) -> None:
-    await db.execute(delete(LoginAttempt).where(LoginAttempt.key == key))
-    await db.commit()
+    await clear_attempts(db, key)
 
 
 async def login(db: AsyncSession, payload: LoginPayload, request: Request) -> str:
